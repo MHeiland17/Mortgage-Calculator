@@ -129,12 +129,6 @@
                 <button id="resetDefaultsBtn" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors text-sm disabled:opacity-40 disabled:pointer-events-none" title="Reset to defaults" aria-label="Reset to defaults">
                     <i class="fa-solid fa-eraser"></i>
                 </button>
-
-                <!-- Theme Toggle (Defaults to Dark) -->
-                <button id="themeToggle" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors text-sm disabled:opacity-40 disabled:pointer-events-none" title="Toggle Light/Dark Theme" aria-label="Toggle light or dark theme">
-                    <i class="fa-solid fa-moon dark:hidden text-indigo-600"></i>
-                    <i class="fa-solid fa-sun hidden dark:block text-amber-400"></i>
-                </button>
             </div>
         </div>
     </header>
@@ -579,6 +573,95 @@
                 </div>
             </section>
 
+            <!-- Interest Rates & RBA -->
+            <section data-section-id="rates" class="bg-white dark:bg-navy-900 rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 dark:border-slate-800">
+                <div class="flex items-start justify-between gap-3 mb-5">
+                    <div>
+                        <h3 class="font-bold text-slate-900 dark:text-white text-base">Interest Rates & RBA</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Next cash rate decision and current lender home loan rates for your loan</p>
+                    </div>
+                    <div data-section-controls></div>
+                </div>
+
+                <!-- RBA cash rate & next decision -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="p-4 rounded-xl bg-slate-800/50 border border-slate-800">
+                        <span class="text-xs text-slate-400 block mb-1">RBA cash rate target</span>
+                        <span id="rbaCashRate" class="text-2xl font-extrabold text-white">—</span>
+                        <span id="rbaCashRateDetail" class="text-[11px] text-slate-400 block mt-0.5">—</span>
+                    </div>
+                    <div class="p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/30 sm:col-span-2">
+                        <span class="text-xs text-indigo-300 block mb-1">Next RBA rate decision</span>
+                        <div class="flex flex-wrap items-baseline gap-x-3">
+                            <span id="rbaNextDate" class="text-2xl font-extrabold text-white">—</span>
+                            <span id="rbaNextCountdown" class="text-sm font-bold text-indigo-300">—</span>
+                        </div>
+                        <span id="rbaNextDetail" class="text-[11px] text-slate-400 block mt-0.5">—</span>
+                        <div id="rbaUpcoming" class="flex flex-wrap gap-1.5 mt-3"></div>
+                    </div>
+                </div>
+                <p id="rbaStaleNote" class="hidden mt-2 text-[11px] font-medium text-amber-400"></p>
+                <p class="mt-2 text-[11px] text-slate-500">
+                    Decisions are announced at 2:30pm Sydney time on the second day of each Monetary Policy Board meeting.
+                    Source: <a href="https://www.rba.gov.au/schedules-events/board-meeting-schedules.html" target="_blank" rel="noopener" class="underline hover:text-brand-400">RBA meeting schedule</a> ·
+                    <a href="https://www.rba.gov.au/statistics/cash-rate/" target="_blank" rel="noopener" class="underline hover:text-brand-400">cash rate</a>
+                </p>
+
+                <!-- Lender home loan rates (Open Banking / Consumer Data Right) -->
+                <div class="mt-6">
+                    <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
+                        <div>
+                            <h4 class="text-sm font-bold text-white flex items-center">
+                                <i class="fa-solid fa-building-columns text-brand-500 mr-2"></i> Lender home loan rates
+                            </h4>
+                            <p id="bankRatesScenario" class="text-[11px] text-slate-400 mt-0.5">—</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="grid grid-cols-2 gap-1 bg-slate-800 p-1 rounded-lg text-[11px] font-semibold">
+                                <button type="button" class="rates-purpose-btn px-2.5 py-1 rounded-md" data-purpose="OWNER_OCCUPIED">Owner occupier</button>
+                                <button type="button" class="rates-purpose-btn px-2.5 py-1 rounded-md" data-purpose="INVESTMENT">Investor</button>
+                            </div>
+                            <button id="bankRatesRefreshBtn" type="button" class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-700 text-slate-300 hover:text-brand-400 hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:pointer-events-none" title="Refresh lender rates" aria-label="Refresh lender rates">
+                                <i class="fa-solid fa-arrows-rotate"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="bankRatesHeadline" class="hidden mb-3 px-4 py-3 rounded-xl bg-brand-900/20 border border-brand-900/40 text-sm"></div>
+
+                    <div id="bankRatesProgress" class="hidden mb-3">
+                        <div class="flex justify-between text-[11px] text-slate-400 mb-1">
+                            <span id="bankRatesProgressLabel">Loading lender rates…</span>
+                        </div>
+                        <div class="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                            <div id="bankRatesProgressBar" class="h-full bg-brand-500 transition-all duration-300" style="width:0%"></div>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-xl border border-slate-800">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-900">
+                                <tr class="border-b border-slate-800 text-slate-400 uppercase font-semibold">
+                                    <th class="py-2.5 px-3">Lender</th>
+                                    <th class="py-2.5 px-3">Lowest variable</th>
+                                    <th class="py-2.5 px-3">Lowest fixed</th>
+                                    <th class="py-2.5 px-3 text-right">Repayment at variable</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bankRatesTableBody" class="divide-y divide-slate-800 text-slate-300">
+                                <tr><td colspan="4" class="py-6 px-3 text-center text-slate-500">Lender rates load when this section comes into view.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p id="bankRatesUpdated" class="mt-2 text-[11px] text-slate-500 leading-tight">
+                        Rates come from each lender's public Open Banking (Consumer Data Right) product data and are matched to your loan type, repayment type, LVR and loan size.
+                    </p>
+                    <p class="mt-1 text-[11px] text-slate-500 leading-tight">
+                        Loans with special eligibility (veterans, staff, green upgrades, construction, bridging) are left out, and first home buyer loans only show when First Home Buyer is ticked. Some customer-owned banks only lend to their members, and some rates need a package or a minimum balance, so check the lender's product page before relying on a rate. Click a rate to use it in the calculator.
+                    </p>
+                </div>
+            </section>
+
             <!-- Interactive Chart -->
             <section data-section-id="chart" class="bg-white dark:bg-navy-900 rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 dark:border-slate-800">
                 <div class="flex items-start justify-between gap-3 mb-6">
@@ -673,16 +756,55 @@
     <!-- Logic JavaScript -->
     <script>
         const STORAGE_KEY = 'nsw_mortgage_calculator_state';
-        const THEME_KEY = 'nsw_mortgage_theme_preference';
+        const RATES_CACHE_KEY = 'nsw_mortgage_bank_rates_cache_v1';
 
         // Re-orderable sections, in default order
-        const SECTION_IDS = ['repayment', 'offset', 'chart', 'frequency', 'milestones'];
+        const SECTION_IDS = ['repayment', 'offset', 'rates', 'chart', 'frequency', 'milestones'];
 
         const FREQUENCIES = {
             weekly: { perYear: 52, suffix: '/ week', title: 'Weekly Repayment', name: 'Weekly' },
             fortnightly: { perYear: 26, suffix: '/ fortnight', title: 'Fortnightly Repayment', name: 'Fortnightly' },
             monthly: { perYear: 12, suffix: '/ month', title: 'Monthly Repayment', name: 'Monthly' }
         };
+
+        // RBA Monetary Policy Board decisions: 2:30pm Sydney time on day two of each meeting.
+        // Source: rba.gov.au/schedules-events/board-meeting-schedules.html (add new years as the RBA publishes them)
+        const RBA_DECISIONS = [
+            '2026-02-03T14:30:00+11:00', '2026-03-17T14:30:00+11:00', '2026-05-05T14:30:00+10:00', '2026-06-16T14:30:00+10:00',
+            '2026-08-11T14:30:00+10:00', '2026-09-29T14:30:00+10:00', '2026-11-03T14:30:00+11:00', '2026-12-08T14:30:00+11:00',
+            '2027-02-09T14:30:00+11:00', '2027-03-23T14:30:00+11:00', '2027-05-04T14:30:00+10:00', '2027-06-22T14:30:00+10:00',
+            '2027-08-10T14:30:00+10:00', '2027-09-28T14:30:00+10:00', '2027-11-02T14:30:00+11:00', '2027-12-14T14:30:00+11:00'
+        ].map(iso => new Date(iso));
+
+        // Latest cash rate target (the RBA doesn't allow other sites to fetch its data, so update this by hand)
+        const CASH_RATE = { rate: 4.60, change: 0.25, effective: '2026-09-30', asAt: '2026-10-28' };
+
+        // Lenders publishing home loan rates through Open Banking (Consumer Data Right) that allow browser access
+        const LENDERS = [
+            { name: 'CommBank', base: 'https://api.commbank.com.au/public' },
+            { name: 'Westpac', base: 'https://digital-api.westpac.com.au' },
+            { name: 'NAB', base: 'https://openbank.api.nab.com.au' },
+            { name: 'ANZ', base: 'https://api.anz' },
+            { name: 'Macquarie', base: 'https://api.macquariebank.io' },
+            { name: 'ING', base: 'https://id.ob.ing.com.au' },
+            { name: 'ubank', base: 'https://public.cdr-api.86400.com.au' },
+            { name: 'Bankwest', base: 'https://open-api.bankwest.com.au/bwpublic' },
+            { name: 'St.George', base: 'https://digital-api.stgeorge.com.au' },
+            { name: 'BOQ', base: 'https://api.cds.boq.com.au' },
+            { name: 'Bendigo Bank', base: 'https://api.cdr.bendigobank.com.au' },
+            { name: 'Great Southern Bank', base: 'https://api.open-banking.greatsouthernbank.com.au' },
+            { name: 'Newcastle Permanent', base: 'https://openbank.newcastlepermanent.com.au' },
+            { name: 'Greater Bank', base: 'https://public.cdr.greater.com.au' },
+            { name: 'Teachers Mutual Bank', base: 'https://ob.tmbl.com.au/tmbank' },
+            { name: 'IMB Bank', base: 'https://openbank.openbanking.imb.com.au' },
+            { name: 'Police Bank', base: 'https://public.cdr.prd.policebank.com.au' },
+            { name: 'Beyond Bank', base: 'https://public.cdr.api.beyondbank.com.au' },
+            { name: 'Bank Australia', base: 'https://public.cdr.bankaust.com.au' },
+            { name: 'AMP Bank', base: 'https://api.cdr-api.amp.com.au' },
+            { name: 'ME Bank', base: 'https://api.cds.mebank.com.au' }
+        ];
+        const CDR_HEADERS = { 'x-v': '9', 'x-min-v': '1' }; // accept whichever API version each lender supports
+        const RATES_MAX_AGE_MS = 12 * 60 * 60 * 1000;
 
         // Default application state
         const defaultState = {
@@ -699,6 +821,7 @@
             loanStartDate: '', // YYYY-MM-DD
             firstPaymentDate: '', // YYYY-MM-DD, blank = one period after start
             extraRepayments: [], // [{ id, date: YYYY-MM-DD, amount }], negative amounts are corrections
+            ratesPurpose: 'OWNER_OCCUPIED', // lender rate comparison: OWNER_OCCUPIED or INVESTMENT
             sectionOrder: [...SECTION_IDS],
             paramsCollapsed: false,
             dutyExpanded: false
@@ -756,61 +879,34 @@
         let toastTimeout = null;
         let trackerShowAll = false;
         let draggedSection = null;
+        let bankRates = null; // { fetchedAt, lenders: [{ name, ok, error, rates: [...] }] }
+        let bankRatesLoading = false;
 
         // Undo / redo history of state snapshots (view-only settings are left out)
-        const HISTORY_IGNORED_KEYS = ['paramsCollapsed', 'dutyExpanded', 'chartMode'];
+        const HISTORY_IGNORED_KEYS = ['paramsCollapsed', 'dutyExpanded', 'chartMode', 'ratesPurpose'];
         const HISTORY_LIMIT = 100;
         const HISTORY_GROUP_MS = 700; // rapid changes (e.g. typing a number) become one undo step
         const history = { past: [], future: [], committed: null, pendingBase: null, timer: null };
 
         // Initialize Application
         document.addEventListener('DOMContentLoaded', () => {
-            initDefaultTheme();
             loadStateFromStorage();
+            bankRates = loadBankRatesCache();
             history.committed = historySnapshot();
             setupSectionControls();
             setupEventListeners();
             syncFormWithState();
             calculateAll();
             updateHistoryButtons();
+            setupBankRatesAutoLoad();
         });
-
-        // 1. Theme Management (Defaults to Dark Mode unless explicitly saved as light)
-        function initDefaultTheme() {
-            const savedTheme = localStorage.getItem(THEME_KEY);
-            const htmlEl = document.documentElement;
-
-            if (savedTheme === 'light') {
-                htmlEl.classList.remove('dark');
-            } else {
-                // Default to dark mode if unconfigured or explicitly 'dark'
-                htmlEl.classList.add('dark');
-            }
-
-            const themeToggle = document.getElementById('themeToggle');
-            themeToggle.addEventListener('click', () => {
-                const isCurrentlyDark = htmlEl.classList.contains('dark');
-                if (isCurrentlyDark) {
-                    htmlEl.classList.remove('dark');
-                    localStorage.setItem(THEME_KEY, 'light');
-                    showToast('Switched to Light Mode', 'fa-sun');
-                } else {
-                    htmlEl.classList.add('dark');
-                    localStorage.setItem(THEME_KEY, 'dark');
-                    showToast('Switched to Dark Mode', 'fa-moon');
-                }
-
-                if (chartInstance) {
-                    calculateAll();
-                }
-            });
-        }
 
         // Merge a stored/imported state over the defaults and clean up layout values
         function buildState(source) {
             const merged = { ...defaultState, ...source };
             merged.sectionOrder = normalizeSectionOrder(merged.sectionOrder);
             if (!FREQUENCIES[merged.frequency]) merged.frequency = defaultState.frequency;
+            if (!['OWNER_OCCUPIED', 'INVESTMENT'].includes(merged.ratesPurpose)) merged.ratesPurpose = defaultState.ratesPurpose;
             if (!isValidISODate(merged.loanStartDate)) merged.loanStartDate = '';
             if (!isValidISODate(merged.firstPaymentDate)) merged.firstPaymentDate = '';
             merged.extraRepayments = Array.isArray(merged.extraRepayments)
@@ -1005,6 +1101,13 @@
             updateParamsPanelUI();
             updateDutyPanelUI();
             applySectionOrder();
+
+            // Lender rate comparison: owner occupier or investor
+            document.querySelectorAll('.rates-purpose-btn').forEach(btn => {
+                btn.className = `rates-purpose-btn px-2.5 py-1 rounded-md transition-colors ${btn.dataset.purpose === state.ratesPurpose
+                    ? 'bg-navy-900 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-white'}`;
+            });
         }
 
         // Format Currency AUD
@@ -1444,6 +1547,26 @@
                 });
             });
 
+            // Lender rates: purpose toggle, refresh, and clicking a rate to use it
+            document.querySelectorAll('.rates-purpose-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    state.ratesPurpose = btn.dataset.purpose;
+                    syncFormWithState();
+                    saveAndRecalculate();
+                });
+            });
+
+            document.getElementById('bankRatesRefreshBtn').addEventListener('click', () => loadBankRates());
+
+            sectionsContainer.querySelector('[data-section-id="rates"]').addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-use-rate]');
+                if (!btn) return;
+                state.interestRate = parseFloat(btn.dataset.useRate);
+                interestRateInput.value = state.interestRate;
+                saveAndRecalculate();
+                showToast(`Interest rate set to ${state.interestRate}% (${btn.dataset.rateLabel})`, 'fa-percent');
+            });
+
             // Payment tracker dates
             loanStartDateInput.addEventListener('change', (e) => {
                 state.loanStartDate = isValidISODate(e.target.value) ? e.target.value : '';
@@ -1695,6 +1818,10 @@
             }
             renderExtraRepaymentList();
 
+            // RBA schedule and lender rates (re-matched to the current loan on every change)
+            renderRbaInfo();
+            renderBankRates();
+
             // Update Offset Summary Card
             offsetActiveBadge.textContent = state.offsetBalance > 0
                 ? `Active (${formatAUD(state.offsetBalance)} Offset)`
@@ -1731,6 +1858,365 @@
 
             // Render/Update Chart
             renderChart(standardSchedule, offsetSchedule);
+        }
+
+        // 5. RBA cash rate & meeting schedule
+        function sydneyDayKey(date) {
+            return date.toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' }); // YYYY-MM-DD
+        }
+
+        function renderRbaInfo() {
+            const now = new Date();
+            const changeText = CASH_RATE.change === 0
+                ? 'Unchanged'
+                : `${CASH_RATE.change > 0 ? '+' : '−'}${Math.abs(CASH_RATE.change).toFixed(2)}`;
+            document.getElementById('rbaCashRate').textContent = `${CASH_RATE.rate.toFixed(2)}%`;
+            document.getElementById('rbaCashRateDetail').textContent =
+                `${changeText} from ${formatDate(parseISODate(CASH_RATE.effective))} · as at ${formatDate(parseISODate(CASH_RATE.asAt))}`;
+
+            const upcoming = RBA_DECISIONS.filter(d => d > now);
+            const next = upcoming[0];
+            const formatDecision = (d, opts) => d.toLocaleDateString('en-AU', { timeZone: 'Australia/Sydney', ...opts });
+
+            if (next) {
+                const days = Math.round((Date.parse(sydneyDayKey(next)) - Date.parse(sydneyDayKey(now))) / 86400000);
+                document.getElementById('rbaNextDate').textContent = formatDecision(next, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+                document.getElementById('rbaNextCountdown').textContent = days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : `in ${days} days`;
+                document.getElementById('rbaNextDetail').textContent = 'Announced at 2:30pm Sydney time';
+                document.getElementById('rbaUpcoming').innerHTML = upcoming.slice(1, 5).map(d => `
+                    <span class="px-2 py-0.5 rounded-md bg-slate-800 text-[11px] font-semibold text-slate-300">${formatDecision(d, { day: 'numeric', month: 'short', year: 'numeric' })}</span>`).join('');
+            } else {
+                document.getElementById('rbaNextDate').textContent = 'Not yet scheduled';
+                document.getElementById('rbaNextCountdown').textContent = '';
+                document.getElementById('rbaNextDetail').textContent = 'Check the RBA website for the next meeting dates';
+                document.getElementById('rbaUpcoming').innerHTML = '';
+            }
+
+            // Flag when a decision has been announced since the cash rate above was last updated
+            const missed = RBA_DECISIONS.filter(d => d <= now && sydneyDayKey(d) >= CASH_RATE.asAt).pop();
+            const staleNote = document.getElementById('rbaStaleNote');
+            staleNote.classList.toggle('hidden', !missed);
+            if (missed) {
+                staleNote.textContent = `The RBA announced a decision on ${formatDecision(missed, { day: 'numeric', month: 'long', year: 'numeric' })}, so the cash rate shown may be out of date.`;
+            }
+        }
+
+        // 6. Lender home loan rates (Open Banking / Consumer Data Right product data)
+        function escapeHtml(text) {
+            return String(text).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
+        }
+
+        function safeUrl(url) {
+            try {
+                const parsed = new URL(url);
+                return parsed.protocol === 'https:' ? parsed.href : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function loadBankRatesCache() {
+            try {
+                const cached = JSON.parse(localStorage.getItem(RATES_CACHE_KEY));
+                return cached && typeof cached.fetchedAt === 'number' && Array.isArray(cached.lenders) ? cached : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function saveBankRatesCache() {
+            try {
+                localStorage.setItem(RATES_CACHE_KEY, JSON.stringify(bankRates));
+            } catch (e) {
+                console.warn('Could not cache lender rates', e);
+            }
+        }
+
+        // Load rates the first time the section scrolls into view, if the cached copy is missing or old
+        function setupBankRatesAutoLoad() {
+            const isStale = () => !bankRates || Date.now() - bankRates.fetchedAt > RATES_MAX_AGE_MS;
+            const section = sectionsContainer.querySelector('[data-section-id="rates"]');
+            if (!('IntersectionObserver' in window)) {
+                if (isStale()) loadBankRates();
+                return;
+            }
+            const observer = new IntersectionObserver((entries) => {
+                if (!entries.some(entry => entry.isIntersecting)) return;
+                observer.disconnect();
+                if (isStale()) loadBankRates();
+            }, { rootMargin: '200px' });
+            observer.observe(section);
+        }
+
+        async function fetchCdrJson(url, timeoutMs = 20000) {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), timeoutMs);
+            try {
+                const response = await fetch(url, { headers: CDR_HEADERS, signal: controller.signal });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return await response.json();
+            } finally {
+                clearTimeout(timer);
+            }
+        }
+
+        // Run fn over items with at most `limit` requests in flight; failed items become null
+        async function mapWithLimit(items, limit, fn) {
+            const results = new Array(items.length).fill(null);
+            let nextIndex = 0;
+            const worker = async () => {
+                while (nextIndex < items.length) {
+                    const index = nextIndex++;
+                    try {
+                        results[index] = await fn(items[index]);
+                    } catch (e) {
+                        results[index] = null;
+                    }
+                }
+            };
+            await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+            return results;
+        }
+
+        function durationToMonths(duration) {
+            const match = /^P(?:(\d+)Y)?(?:(\d+)M)?/.exec(duration || '');
+            if (!match || (!match[1] && !match[2])) return null;
+            return (parseInt(match[1] || 0) * 12) + parseInt(match[2] || 0);
+        }
+
+        // [min, max] for a tier; max null = no upper limit. LVR tiers may be fractions (0.8) or percentages (80).
+        function tierRange(tier, isLvr) {
+            let min = parseFloat(tier.minimumValue);
+            let max = parseFloat(tier.maximumValue);
+            if (!isFinite(min)) min = 0;
+            if (!isFinite(max)) max = null;
+            if (isLvr && Math.max(min, max || 0) > 1.5) {
+                min /= 100;
+                if (max !== null) max /= 100;
+            }
+            return [min, max];
+        }
+
+        // Keep only standard variable and fixed rates, in a compact form for caching
+        function parseLendingRate(lendingRate, product) {
+            if (!['VARIABLE', 'FIXED'].includes(lendingRate.lendingRateType)) return null;
+            const rate = parseFloat(lendingRate.rate);
+            if (!(rate > 0.005 && rate < 0.25)) return null;
+
+            const text = `${product.name} ${lendingRate.additionalInfo || ''}`;
+            const purpose = lendingRate.loanPurpose || (/invest/i.test(text) ? 'INVESTMENT' : 'OWNER_OCCUPIED');
+            const repayment = lendingRate.repaymentType || (/interest[\s-]*only/i.test(text) ? 'INTEREST_ONLY' : 'PRINCIPAL_AND_INTEREST');
+            const tiers = lendingRate.tiers || [];
+            const lvrTier = tiers.find(t => /lvr|loan.?to.?value/i.test(t.name || '') || t.unitOfMeasure === 'PERCENT');
+            const balanceTier = tiers.find(t => t.unitOfMeasure === 'DOLLAR');
+            const comparison = parseFloat(lendingRate.comparisonRate);
+
+            return {
+                type: lendingRate.lendingRateType === 'FIXED' ? 'FIXED' : 'VARIABLE',
+                rate,
+                comparison: isFinite(comparison) ? comparison : null,
+                purpose: purpose === 'INVESTMENT' ? 'INVESTMENT' : 'OWNER_OCCUPIED',
+                interestOnly: repayment === 'INTEREST_ONLY',
+                fixedMonths: lendingRate.lendingRateType === 'FIXED' ? durationToMonths(lendingRate.additionalValue) : null,
+                lvr: lvrTier ? tierRange(lvrTier, true) : null,
+                balance: balanceTier ? tierRange(balanceTier, false) : null
+            };
+        }
+
+        // Who can get a product: 'restricted' loans (veterans, staff, green upgrades, construction, bridging…)
+        // are left out of the comparison; 'first-home' loans only count for first home buyers
+        function productEligibility(product) {
+            const name = product.name || '';
+            const types = (product.eligibility || []).map(e => e.eligibilityType);
+            if (types.includes('STAFF') || types.includes('EMPLOYMENT_STATUS')) return 'restricted';
+            if (/veteran|defen[cs]e force|essential worker|bridging|construction|sustainab|clean energy|green|reverse mortgage|equity release|line of credit|staff/i.test(name)) return 'restricted';
+            if (/first home/i.test(name)) return 'first-home';
+            return 'general';
+        }
+
+        async function fetchLenderProducts(lender) {
+            const listed = [];
+            for (let page = 1; page <= 5; page++) {
+                const list = await fetchCdrJson(`${lender.base}/cds-au/v1/banking/products?product-category=RESIDENTIAL_MORTGAGES&page-size=100&page=${page}`);
+                listed.push(...((list.data && list.data.products) || []));
+                if (!list.meta || page >= (list.meta.totalPages || 1)) break;
+            }
+
+            // Rates are only on each product's detail record
+            const details = await mapWithLimit(listed, 4, item =>
+                fetchCdrJson(`${lender.base}/cds-au/v1/banking/products/${encodeURIComponent(item.productId)}`));
+
+            return details
+                .map(detail => detail && detail.data)
+                .filter(Boolean)
+                .map(product => ({
+                    name: product.name,
+                    url: safeUrl(product.applicationUri) || safeUrl(product.additionalInformation && product.additionalInformation.overviewUri),
+                    eligibility: productEligibility(product),
+                    rates: (product.lendingRates || []).map(rate => parseLendingRate(rate, product)).filter(Boolean)
+                }))
+                .filter(product => product.rates.length);
+        }
+
+        async function loadBankRates() {
+            if (bankRatesLoading) return;
+            bankRatesLoading = true;
+
+            const refreshBtn = document.getElementById('bankRatesRefreshBtn');
+            refreshBtn.disabled = true;
+            refreshBtn.querySelector('i').classList.add('fa-spin');
+            const progress = document.getElementById('bankRatesProgress');
+            const progressLabel = document.getElementById('bankRatesProgressLabel');
+            const progressBar = document.getElementById('bankRatesProgressBar');
+            progress.classList.remove('hidden');
+
+            // Keep showing earlier results for each lender until its fresh data arrives
+            const previous = new Map(((bankRates && bankRates.lenders) || []).map(l => [l.name, l]));
+            const lenders = LENDERS.map(l => ({ name: l.name, ok: false, loading: true, products: (previous.get(l.name) || {}).products || [] }));
+            bankRates = { fetchedAt: (bankRates && bankRates.fetchedAt) || Date.now(), lenders };
+
+            let done = 0;
+            const updateProgress = () => {
+                progressLabel.textContent = `Loading lender rates… ${done} of ${LENDERS.length}`;
+                progressBar.style.width = `${(done / LENDERS.length) * 100}%`;
+            };
+            updateProgress();
+            renderBankRates();
+
+            await Promise.all(LENDERS.map(async (lender, i) => {
+                try {
+                    lenders[i] = { name: lender.name, ok: true, products: await fetchLenderProducts(lender) };
+                } catch (e) {
+                    lenders[i] = {
+                        name: lender.name,
+                        ok: false,
+                        error: e.name === 'AbortError' ? 'Timed out' : 'Unavailable right now',
+                        products: lenders[i].products
+                    };
+                }
+                done++;
+                updateProgress();
+                renderBankRates();
+            }));
+
+            bankRates.fetchedAt = Date.now();
+            saveBankRatesCache();
+            bankRatesLoading = false;
+            refreshBtn.disabled = false;
+            refreshBtn.querySelector('i').classList.remove('fa-spin');
+            progress.classList.add('hidden');
+            renderBankRates();
+        }
+
+        // Repayment for the current loan at a given annual rate (%), using the selected frequency and type
+        function repaymentAtRate(ratePct) {
+            const loanAmount = Math.max(0, state.propertyPrice - state.deposit);
+            const perYear = FREQUENCIES[state.frequency].perYear;
+            const i = ratePct / 100 / perYear;
+            const n = state.loanTerm * perYear;
+            if (loanAmount <= 0) return 0;
+            if (state.repaymentType === 'IO') return loanAmount * i;
+            return i > 0 ? loanAmount * (i * Math.pow(1 + i, n)) / (Math.pow(1 + i, n) - 1) : loanAmount / n;
+        }
+
+        function timeAgo(timestamp) {
+            const minutes = Math.round((Date.now() - timestamp) / 60000);
+            if (minutes < 1) return 'just now';
+            if (minutes < 60) return `${minutes} min ago`;
+            const hours = Math.round(minutes / 60);
+            if (hours < 48) return `${hours} hr${hours === 1 ? '' : 's'} ago`;
+            return `${Math.round(hours / 24)} days ago`;
+        }
+
+        function renderBankRates() {
+            const loanAmount = Math.max(0, state.propertyPrice - state.deposit);
+            const lvr = state.propertyPrice > 0 ? loanAmount / state.propertyPrice : 0;
+            const interestOnly = state.repaymentType === 'IO';
+            const freq = FREQUENCIES[state.frequency];
+            const currentPayment = repaymentAtRate(state.interestRate);
+
+            document.getElementById('bankRatesScenario').textContent =
+                `${state.ratesPurpose === 'INVESTMENT' ? 'Investor' : 'Owner occupier'} · ${interestOnly ? 'Interest only' : 'Principal & interest'} · LVR ${(lvr * 100).toFixed(1)}% · ${formatAUD(loanAmount)} loan · your rate ${state.interestRate}%`;
+
+            const tbody = document.getElementById('bankRatesTableBody');
+            const headline = document.getElementById('bankRatesHeadline');
+            if (!bankRates) {
+                headline.classList.add('hidden');
+                return;
+            }
+
+            const within = (value, range) => !range || (value >= range[0] - 1e-9 && (range[1] === null || value <= range[1] + 1e-9));
+            const lowest = (rates) => rates.reduce((best, r) => (!best || r.rate < best.rate ? r : best), null);
+
+            const rows = bankRates.lenders.map(lender => {
+                const eligible = lender.products.filter(product =>
+                    product.eligibility === 'general' || (product.eligibility === 'first-home' && state.isFHB));
+                const matches = eligible.flatMap(product => product.rates
+                    .filter(r => r.purpose === state.ratesPurpose && r.interestOnly === interestOnly && within(lvr, r.lvr) && within(loanAmount, r.balance))
+                    .map(r => ({ ...r, product: product.name, url: product.url, lender: lender.name })));
+                return {
+                    lender,
+                    variable: lowest(matches.filter(r => r.type === 'VARIABLE')),
+                    fixed: lowest(matches.filter(r => r.type === 'FIXED'))
+                };
+            }).sort((a, b) => ((a.variable || a.fixed || { rate: 1 }).rate) - ((b.variable || b.fixed || { rate: 1 }).rate));
+
+            const pct = (rate) => (rate * 100).toFixed(2);
+            const productLabel = (r) => r.url
+                ? `<a href="${escapeHtml(r.url)}" target="_blank" rel="noopener" class="hover:text-brand-400 hover:underline">${escapeHtml(r.product)}</a>`
+                : escapeHtml(r.product);
+            const rateButton = (r, extra) => `
+                <button type="button" data-use-rate="${pct(r.rate)}" data-rate-label="${escapeHtml(`${r.lender} ${r.product}`)}" title="Use this rate in the calculator"
+                    class="text-left group">
+                    <span class="text-sm font-extrabold text-white group-hover:text-brand-400">${pct(r.rate)}%</span>
+                    <span class="text-[10px] text-slate-400 ml-1">${extra}</span>
+                </button>
+                <span class="block text-[10px] text-slate-500 truncate max-w-[14rem]">${productLabel(r)}</span>`;
+            const fixedTerm = (months) => !months ? 'fixed' : months % 12 === 0 ? `${months / 12} yr fixed` : `${months} mth fixed`;
+
+            tbody.innerHTML = rows.map(({ lender, variable, fixed }) => {
+                let status = '';
+                if (lender.loading) status = '<span class="text-[10px] text-slate-500 ml-1"><i class="fa-solid fa-circle-notch fa-spin"></i></span>';
+                else if (!lender.ok) status = `<span class="block text-[10px] text-amber-400">${escapeHtml(lender.error || 'Unavailable')}${lender.products.length ? ' · earlier data' : ''}</span>`;
+
+                const noMatch = `<span class="text-slate-500">${lender.loading && !lender.products.length ? 'Loading…' : '—'}</span>`;
+                let repaymentCell = '<span class="text-slate-500">—</span>';
+                if (variable) {
+                    const payment = repaymentAtRate(variable.rate * 100);
+                    const diff = payment - currentPayment;
+                    repaymentCell = `
+                        <span class="font-bold text-white">${formatAUD(payment)}</span><span class="text-[10px] text-slate-400"> ${freq.suffix}</span>
+                        <span class="block text-[10px] font-semibold ${Math.abs(diff) < 1 ? 'text-slate-500' : diff < 0 ? 'text-brand-400' : 'text-rose-400'}">
+                            ${Math.abs(diff) < 1 ? 'Same as yours' : `${diff < 0 ? '−' : '+'}${formatAUD(Math.abs(diff))} vs yours`}
+                        </span>`;
+                }
+
+                return `
+                    <tr class="align-top">
+                        <td class="py-2.5 px-3 font-semibold text-white whitespace-nowrap">${escapeHtml(lender.name)}${status}</td>
+                        <td class="py-2.5 px-3">${variable ? rateButton(variable, variable.comparison ? `comp. ${pct(variable.comparison)}%` : '') : noMatch}</td>
+                        <td class="py-2.5 px-3">${fixed ? rateButton(fixed, fixedTerm(fixed.fixedMonths)) : noMatch}</td>
+                        <td class="py-2.5 px-3 text-right whitespace-nowrap">${repaymentCell}</td>
+                    </tr>`;
+            }).join('');
+
+            // Best variable rate across all lenders
+            const best = lowest(rows.map(row => row.variable).filter(Boolean));
+            headline.classList.toggle('hidden', !best);
+            if (best) {
+                const diff = repaymentAtRate(best.rate * 100) - currentPayment;
+                headline.innerHTML = `
+                    <span class="text-slate-300">Lowest variable rate for your loan:</span>
+                    <button type="button" data-use-rate="${pct(best.rate)}" data-rate-label="${escapeHtml(`${best.lender} ${best.product}`)}" class="font-extrabold text-brand-400 hover:underline">${pct(best.rate)}%</button>
+                    <span class="text-slate-300">at ${escapeHtml(best.lender)}</span>
+                    <span class="text-slate-400">(${escapeHtml(best.product)})</span>
+                    ${diff < -1 ? `<span class="block sm:inline text-xs text-brand-400 font-semibold sm:ml-1">${formatAUD(Math.abs(diff))} ${freq.suffix} less than your ${state.interestRate}%</span>` : ''}`;
+            }
+
+            const okCount = bankRates.lenders.filter(l => l.ok).length;
+            document.getElementById('bankRatesUpdated').textContent = bankRatesLoading
+                ? 'Fetching the latest rates from each lender…'
+                : `Updated ${timeAgo(bankRates.fetchedAt)} · ${okCount} of ${LENDERS.length} lenders responded. Rates come from each lender's public Open Banking (Consumer Data Right) product data, matched to your loan type, repayment type, LVR and loan size.`;
         }
 
         // Group extra repayments by how many scheduled repayments fall on or before their date
@@ -2144,10 +2630,10 @@
         // Render Chart.js
         function renderChart(stdSchedule, offsetSchedule) {
             const ctx = document.getElementById('amortizationChart').getContext('2d');
-            const isDark = document.documentElement.classList.contains('dark');
+            // Dark theme only
 
-            const textColor = isDark ? '#94a3b8' : '#64748b';
-            const gridColor = isDark ? '#1e293b' : '#f1f5f9';
+            const textColor = '#94a3b8';
+            const gridColor = '#1e293b';
 
             if (chartInstance) {
                 chartInstance.destroy();
@@ -2160,7 +2646,7 @@
                     {
                         label: 'Standard Loan Balance',
                         data: stdSchedule.balanceHistory,
-                        borderColor: isDark ? '#64748b' : '#94a3b8',
+                        borderColor: '#64748b',
                         borderDash: [5, 5],
                         backgroundColor: 'transparent',
                         fill: false,
@@ -2171,7 +2657,7 @@
                         label: 'Balance With Offset',
                         data: offsetSchedule.balanceHistory,
                         borderColor: '#22c55e',
-                        backgroundColor: isDark ? 'rgba(34, 197, 94, 0.15)' : 'rgba(34, 197, 94, 0.1)',
+                        backgroundColor: 'rgba(34, 197, 94, 0.15)',
                         fill: true,
                         tension: 0.2,
                         borderWidth: 3
@@ -2183,7 +2669,7 @@
                         label: 'Cumulative Principal Paid',
                         data: offsetSchedule.principalPaidHistory,
                         borderColor: '#22c55e',
-                        backgroundColor: isDark ? 'rgba(34, 197, 94, 0.25)' : 'rgba(34, 197, 94, 0.15)',
+                        backgroundColor: 'rgba(34, 197, 94, 0.25)',
                         fill: true,
                         tension: 0.2,
                         borderWidth: 2
@@ -2192,7 +2678,7 @@
                         label: 'Cumulative Interest Paid (With Offset)',
                         data: offsetSchedule.interestHistory,
                         borderColor: '#f59e0b',
-                        backgroundColor: isDark ? 'rgba(245, 158, 11, 0.25)' : 'rgba(245, 158, 11, 0.15)',
+                        backgroundColor: 'rgba(245, 158, 11, 0.25)',
                         fill: true,
                         tension: 0.2,
                         borderWidth: 2

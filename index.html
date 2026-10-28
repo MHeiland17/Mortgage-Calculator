@@ -88,7 +88,7 @@
                 <div class="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center text-white shadow-md shadow-brand-500/20">
                     <i class="fa-solid fa-house-chimney-crack text-lg"></i>
                 </div>
-                <div class="min-w-0">
+                <div class="min-w-0 hidden sm:block">
                     <h1 class="font-bold text-base sm:text-lg leading-tight tracking-tight truncate">NSW Mortgage Calculator</h1>
                     <p class="text-xs text-slate-500 dark:text-slate-400 hidden sm:block truncate">Australia • New South Wales Rates, Offset & Duty</p>
                 </div>
@@ -102,26 +102,36 @@
                 </div>
 
                 <!-- Data Management: Import / Export / Copy -->
-                <label class="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors text-sm cursor-pointer" title="Import scenario (JSON)" aria-label="Import scenario from JSON file">
+                <label class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors text-sm disabled:opacity-40 disabled:pointer-events-none cursor-pointer" title="Import scenario (JSON)" aria-label="Import scenario from JSON file">
                     <i class="fa-solid fa-upload"></i>
                     <input type="file" id="importJsonInput" accept=".json,application/json" class="hidden">
                 </label>
-                <button id="exportJsonBtn" class="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors text-sm" title="Export scenario (JSON)" aria-label="Export scenario to JSON file">
+                <button id="exportJsonBtn" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors text-sm disabled:opacity-40 disabled:pointer-events-none" title="Export scenario (JSON)" aria-label="Export scenario to JSON file">
                     <i class="fa-solid fa-download"></i>
                 </button>
-                <button id="copyConfigBtn" class="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors text-sm" title="Copy scenario to clipboard" aria-label="Copy scenario to clipboard">
+                <button id="copyConfigBtn" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors text-sm disabled:opacity-40 disabled:pointer-events-none" title="Copy scenario to clipboard" aria-label="Copy scenario to clipboard">
                     <i class="fa-solid fa-copy"></i>
                 </button>
 
                 <span class="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-0.5 sm:mx-1"></span>
 
-                <!-- Reset Defaults Button -->
-                <button id="resetDefaultsBtn" class="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors text-sm" title="Reset to defaults" aria-label="Reset to defaults">
+                <!-- Undo / Redo -->
+                <button id="undoBtn" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors text-sm disabled:opacity-40 disabled:pointer-events-none" title="Undo (Ctrl+Z)" aria-label="Undo" disabled>
                     <i class="fa-solid fa-rotate-left"></i>
+                </button>
+                <button id="redoBtn" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors text-sm disabled:opacity-40 disabled:pointer-events-none" title="Redo (Ctrl+Shift+Z or Ctrl+Y)" aria-label="Redo" disabled>
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+
+                <span class="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-0.5 sm:mx-1"></span>
+
+                <!-- Reset Defaults Button -->
+                <button id="resetDefaultsBtn" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors text-sm disabled:opacity-40 disabled:pointer-events-none" title="Reset to defaults" aria-label="Reset to defaults">
+                    <i class="fa-solid fa-eraser"></i>
                 </button>
 
                 <!-- Theme Toggle (Defaults to Dark) -->
-                <button id="themeToggle" class="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors text-sm" title="Toggle Light/Dark Theme" aria-label="Toggle light or dark theme">
+                <button id="themeToggle" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors text-sm disabled:opacity-40 disabled:pointer-events-none" title="Toggle Light/Dark Theme" aria-label="Toggle light or dark theme">
                     <i class="fa-solid fa-moon dark:hidden text-indigo-600"></i>
                     <i class="fa-solid fa-sun hidden dark:block text-amber-400"></i>
                 </button>
@@ -321,6 +331,15 @@
                     <div data-section-controls></div>
                 </div>
 
+                <!-- Payment due soon banner (shown within 5 days of the next repayment) -->
+                <div id="paymentDueBanner" role="status" class="hidden mb-5 flex items-center gap-3 px-4 py-3 rounded-xl border text-sm">
+                    <i id="paymentDueIcon" class="fa-solid fa-bell text-base"></i>
+                    <div class="min-w-0">
+                        <p id="paymentDueTitle" class="font-bold"></p>
+                        <p id="paymentDueDetail" class="text-xs opacity-80"></p>
+                    </div>
+                </div>
+
                 <!-- Primary Result Display -->
                 <div class="bg-gradient-to-br from-slate-900 via-navy-900 to-slate-900 text-white rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden border border-slate-800">
                     <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -342,7 +361,7 @@
                         </div>
 
                         <!-- Secondary Metrics Bar -->
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-6 border-t border-slate-800">
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-6 border-t border-slate-800">
                             <div>
                                 <span class="text-xs text-slate-400 block mb-1">Total Loan Principal</span>
                                 <span id="summaryPrincipal" class="text-base sm:text-lg font-bold text-slate-200">$760,000</span>
@@ -351,9 +370,14 @@
                                 <span class="text-xs text-slate-400 block mb-1">Total Interest Paid</span>
                                 <span id="summaryInterest" class="text-base sm:text-lg font-bold text-amber-400">$905,000</span>
                             </div>
-                            <div class="col-span-2 sm:col-span-1">
+                            <div>
                                 <span class="text-xs text-slate-400 block mb-1">Total Principal + Interest</span>
                                 <span id="summaryTotalPaid" class="text-base sm:text-lg font-bold text-brand-400">$1,665,000</span>
+                            </div>
+                            <div>
+                                <span class="text-xs text-slate-400 block mb-1">Extra Repayments</span>
+                                <span id="summaryExtra" class="text-base sm:text-lg font-bold text-sky-400">$0</span>
+                                <span id="summaryExtraDetail" class="text-[11px] text-slate-400 block mt-0.5">None logged</span>
                             </div>
                         </div>
                     </div>
@@ -443,11 +467,40 @@
                                     <div id="trackerSplitInterestBar" class="h-full bg-amber-500 transition-all duration-500" style="width:0%"></div>
                                 </div>
                                 <div class="flex flex-wrap justify-between gap-2 mt-1.5 text-[11px]">
-                                    <span class="text-slate-500 dark:text-slate-400"><span class="inline-block w-2 h-2 rounded-full bg-brand-500 mr-1"></span>Principal <span id="trackerPrincipalPaid" class="font-bold text-brand-600 dark:text-brand-400">$0</span></span>
+                                    <span class="text-slate-500 dark:text-slate-400"><span class="inline-block w-2 h-2 rounded-full bg-brand-500 mr-1"></span>Principal incl. extras <span id="trackerPrincipalPaid" class="font-bold text-brand-600 dark:text-brand-400">$0</span></span>
                                     <span class="text-slate-500 dark:text-slate-400"><span class="inline-block w-2 h-2 rounded-full bg-amber-500 mr-1"></span>Interest <span id="trackerInterestPaid" class="font-bold text-amber-600 dark:text-amber-400">$0</span></span>
                                 </div>
                                 <p id="trackerOffsetSaved" class="hidden mt-2 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium"></p>
                             </div>
+                        </div>
+
+                        <!-- Extra repayments -->
+                        <div class="p-4 rounded-xl border border-sky-500/30 bg-sky-50/60 dark:bg-sky-500/5">
+                            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                                <span class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center">
+                                    <i class="fa-solid fa-circle-plus text-sky-500 mr-2"></i> Extra repayments
+                                </span>
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400">Use a negative amount to correct an earlier entry</span>
+                            </div>
+
+                            <form id="extraRepaymentForm" class="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2 items-end" novalidate>
+                                <div>
+                                    <label for="extraAmountInput" class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Amount</label>
+                                    <div class="relative">
+                                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-semibold text-sm">$</span>
+                                        <input type="number" id="extraAmountInput" step="any" placeholder="e.g. 5000 or -500" data-native-undo class="w-full pl-7 pr-3 py-2 text-sm font-semibold text-slate-900 dark:text-white bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="extraDateInput" class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Date paid</label>
+                                    <input type="date" id="extraDateInput" data-native-undo class="w-full px-3 py-2 text-sm font-semibold text-slate-900 dark:text-white bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                                </div>
+                                <button type="submit" class="px-4 py-2 text-sm font-bold rounded-xl bg-sky-600 hover:bg-sky-500 text-white transition-colors flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-plus"></i> Add
+                                </button>
+                            </form>
+
+                            <ul id="extraRepaymentList" class="mt-3 divide-y divide-slate-200/80 dark:divide-slate-800 text-xs"></ul>
                         </div>
 
                         <!-- Recent & upcoming payments -->
@@ -645,6 +698,7 @@
             chartMode: 'balance', // balance or split
             loanStartDate: '', // YYYY-MM-DD
             firstPaymentDate: '', // YYYY-MM-DD, blank = one period after start
+            extraRepayments: [], // [{ id, date: YYYY-MM-DD, amount }], negative amounts are corrections
             sectionOrder: [...SECTION_IDS],
             paramsCollapsed: false,
             dutyExpanded: false
@@ -674,6 +728,8 @@
         const summaryPrincipal = document.getElementById('summaryPrincipal');
         const summaryInterest = document.getElementById('summaryInterest');
         const summaryTotalPaid = document.getElementById('summaryTotalPaid');
+        const summaryExtra = document.getElementById('summaryExtra');
+        const summaryExtraDetail = document.getElementById('summaryExtraDetail');
 
         // Offset elements
         const offsetActiveBadge = document.getElementById('offsetActiveBadge');
@@ -701,14 +757,22 @@
         let trackerShowAll = false;
         let draggedSection = null;
 
+        // Undo / redo history of state snapshots (view-only settings are left out)
+        const HISTORY_IGNORED_KEYS = ['paramsCollapsed', 'dutyExpanded', 'chartMode'];
+        const HISTORY_LIMIT = 100;
+        const HISTORY_GROUP_MS = 700; // rapid changes (e.g. typing a number) become one undo step
+        const history = { past: [], future: [], committed: null, pendingBase: null, timer: null };
+
         // Initialize Application
         document.addEventListener('DOMContentLoaded', () => {
             initDefaultTheme();
             loadStateFromStorage();
+            history.committed = historySnapshot();
             setupSectionControls();
             setupEventListeners();
             syncFormWithState();
             calculateAll();
+            updateHistoryButtons();
         });
 
         // 1. Theme Management (Defaults to Dark Mode unless explicitly saved as light)
@@ -749,7 +813,16 @@
             if (!FREQUENCIES[merged.frequency]) merged.frequency = defaultState.frequency;
             if (!isValidISODate(merged.loanStartDate)) merged.loanStartDate = '';
             if (!isValidISODate(merged.firstPaymentDate)) merged.firstPaymentDate = '';
+            merged.extraRepayments = Array.isArray(merged.extraRepayments)
+                ? merged.extraRepayments
+                    .filter(e => e && isValidISODate(e.date) && typeof e.amount === 'number' && isFinite(e.amount) && e.amount !== 0)
+                    .map(e => ({ id: String(e.id || newId()), date: e.date, amount: e.amount }))
+                : [];
             return merged;
+        }
+
+        function newId() {
+            return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
         }
 
         // Keep only known section ids (no duplicates) and append any missing ones
@@ -775,12 +848,76 @@
 
         // Save state to localStorage
         function saveStateToStorage() {
+            recordHistory();
             try {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
                 showSavedBadge();
             } catch (e) {
                 console.error("Failed to save calculator session", e);
             }
+        }
+
+        // Undo / Redo
+        function historySnapshot() {
+            const copy = { ...state };
+            HISTORY_IGNORED_KEYS.forEach(key => delete copy[key]);
+            return JSON.stringify(copy);
+        }
+
+        // Note a state change; changes in quick succession are grouped into one undo step
+        function recordHistory() {
+            const snapshot = historySnapshot();
+            if (snapshot === history.committed && history.pendingBase === null) return;
+
+            if (history.pendingBase === null) history.pendingBase = history.committed;
+            history.committed = snapshot;
+            clearTimeout(history.timer);
+            history.timer = setTimeout(flushHistory, HISTORY_GROUP_MS);
+            updateHistoryButtons();
+        }
+
+        function flushHistory() {
+            clearTimeout(history.timer);
+            if (history.pendingBase !== null && history.pendingBase !== history.committed) {
+                history.past.push(history.pendingBase);
+                if (history.past.length > HISTORY_LIMIT) history.past.shift();
+                history.future = [];
+            }
+            history.pendingBase = null;
+            updateHistoryButtons();
+        }
+
+        function undo() {
+            flushHistory();
+            if (!history.past.length) return;
+            history.future.push(history.committed);
+            restoreSnapshot(history.past.pop());
+            showToast('Undone', 'fa-rotate-left');
+        }
+
+        function redo() {
+            flushHistory();
+            if (!history.future.length) return;
+            history.past.push(history.committed);
+            restoreSnapshot(history.future.pop());
+            showToast('Redone', 'fa-rotate-right');
+        }
+
+        function restoreSnapshot(snapshot) {
+            const viewSettings = {};
+            HISTORY_IGNORED_KEYS.forEach(key => { viewSettings[key] = state[key]; });
+            state = buildState({ ...JSON.parse(snapshot), ...viewSettings });
+            history.committed = historySnapshot();
+            saveStateToStorage();
+            syncFormWithState();
+            calculateAll();
+            updateHistoryButtons();
+        }
+
+        function updateHistoryButtons() {
+            const hasPending = history.pendingBase !== null && history.pendingBase !== history.committed;
+            document.getElementById('undoBtn').disabled = !(history.past.length || hasPending);
+            document.getElementById('redoBtn').disabled = !history.future.length || hasPending;
         }
 
         // Feedback indicator when changes are saved
@@ -817,12 +954,14 @@
         // Reset to initial default settings
         function resetToDefaults() {
             state = buildState({});
+            recordHistory();
+            flushHistory();
             try {
                 localStorage.removeItem(STORAGE_KEY);
             } catch (e) {}
             syncFormWithState();
             calculateAll();
-            showToast('Reset to default values', 'fa-rotate-left');
+            showToast('Reset to defaults (Ctrl+Z to undo)', 'fa-eraser');
         }
 
         // Sync inputs and buttons with current state JS object
@@ -1141,6 +1280,24 @@
             // Reset button
             document.getElementById('resetDefaultsBtn').addEventListener('click', resetToDefaults);
 
+            // Undo / Redo buttons and keyboard shortcuts (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z, Ctrl/Cmd+Y)
+            document.getElementById('undoBtn').addEventListener('click', undo);
+            document.getElementById('redoBtn').addEventListener('click', redo);
+            document.addEventListener('keydown', (e) => {
+                if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+                // Fields that aren't part of the scenario keep the browser's own undo
+                if (e.target.closest && e.target.closest('[data-native-undo]')) return;
+
+                const key = e.key.toLowerCase();
+                if (key === 'z' && !e.shiftKey) {
+                    e.preventDefault();
+                    undo();
+                } else if ((key === 'z' && e.shiftKey) || key === 'y') {
+                    e.preventDefault();
+                    redo();
+                }
+            });
+
             // Export & Import Buttons
             document.getElementById('exportJsonBtn').addEventListener('click', exportStateToJson);
             document.getElementById('copyConfigBtn').addEventListener('click', copyConfigToClipboard);
@@ -1303,6 +1460,50 @@
                 saveAndRecalculate();
             });
 
+            // Extra repayments: add (negative amounts allowed as corrections) and remove
+            const extraDateInput = document.getElementById('extraDateInput');
+            extraDateInput.value = toISODate(new Date());
+
+            document.getElementById('extraRepaymentForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const amountInput = document.getElementById('extraAmountInput');
+                const amount = Math.round(parseFloat(amountInput.value) * 100) / 100;
+                const date = extraDateInput.value;
+
+                if (!isFinite(amount) || amount === 0) {
+                    showToast('Enter an amount (negative to correct)', 'fa-triangle-exclamation');
+                    amountInput.focus();
+                    return;
+                }
+                if (!isValidISODate(date)) {
+                    showToast('Choose the date it was paid', 'fa-triangle-exclamation');
+                    return;
+                }
+                if (date < state.loanStartDate) {
+                    showToast('Date is before the loan start date', 'fa-triangle-exclamation');
+                    return;
+                }
+
+                state.extraRepayments = [...state.extraRepayments, { id: newId(), date, amount }];
+                flushHistory();
+                saveAndRecalculate();
+                flushHistory();
+                amountInput.value = '';
+                showToast(amount > 0
+                    ? `Extra repayment of ${formatAUD(amount)} added`
+                    : `Correction of ${formatAUD(amount)} added`, 'fa-circle-plus');
+            });
+
+            document.getElementById('extraRepaymentList').addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-remove-extra]');
+                if (!btn) return;
+                state.extraRepayments = state.extraRepayments.filter(x => x.id !== btn.dataset.removeExtra);
+                flushHistory();
+                saveAndRecalculate();
+                flushHistory();
+                showToast('Extra repayment removed (Ctrl+Z to undo)', 'fa-trash-can');
+            });
+
             document.getElementById('trackerShowAllBtn').addEventListener('click', () => {
                 trackerShowAll = !trackerShowAll;
                 calculateAll();
@@ -1461,9 +1662,14 @@
             }
             const freq = FREQUENCIES[state.frequency];
 
-            // Amortization Schedule Data Generation (with & without offset)
-            const standardSchedule = generateAmortizationSchedule(loanAmount, r, years, state.repaymentType, 0);
-            const offsetSchedule = generateAmortizationSchedule(loanAmount, r, years, state.repaymentType, state.offsetBalance);
+            // Extra repayments need a loan start date to know where they fall in the loan
+            const extrasByMonth = state.loanStartDate
+                ? groupExtrasByPeriod(state.extraRepayments, k => addMonthsClamped(parseISODate(state.loanStartDate), k), years * 12)
+                : new Map();
+
+            // Amortization Schedule Data Generation (with & without offset, both including extra repayments)
+            const standardSchedule = generateAmortizationSchedule(loanAmount, r, years, state.repaymentType, 0, extrasByMonth);
+            const offsetSchedule = generateAmortizationSchedule(loanAmount, r, years, state.repaymentType, state.offsetBalance, extrasByMonth);
 
             // Update Primary Display (Standard Scheduled Payment)
             repaymentAmount.textContent = formatAUD(activePayment);
@@ -1474,13 +1680,28 @@
             summaryInterest.textContent = formatAUD(offsetSchedule.totalInterest);
             summaryTotalPaid.textContent = formatAUD(loanAmount + offsetSchedule.totalInterest);
 
+            // Extra repayments total, and the interest they save compared with none
+            const extrasTotal = state.extraRepayments.reduce((sum, extra) => sum + extra.amount, 0);
+            const extrasCount = state.extraRepayments.length;
+            summaryExtra.textContent = formatAUD(extrasTotal);
+            if (!extrasCount) {
+                summaryExtraDetail.textContent = 'None logged';
+            } else if (!state.loanStartDate) {
+                summaryExtraDetail.textContent = `${extrasCount} logged · set a loan start date to apply`;
+            } else {
+                const noExtrasSchedule = generateAmortizationSchedule(loanAmount, r, years, state.repaymentType, state.offsetBalance);
+                const extrasInterestSaved = noExtrasSchedule.totalInterest - offsetSchedule.totalInterest;
+                summaryExtraDetail.textContent = `${extrasCount} payment${extrasCount === 1 ? '' : 's'} · ${extrasInterestSaved >= 0 ? 'saves' : 'adds'} ${formatAUD(Math.abs(extrasInterestSaved))} interest`;
+            }
+            renderExtraRepaymentList();
+
             // Update Offset Summary Card
             offsetActiveBadge.textContent = state.offsetBalance > 0
                 ? `Active (${formatAUD(state.offsetBalance)} Offset)`
                 : `Inactive ($0 Offset)`;
 
             const interestSaved = Math.max(0, standardSchedule.totalInterest - offsetSchedule.totalInterest);
-            const monthsSaved = Math.max(0, (years * 12) - offsetSchedule.payoffMonths);
+            const monthsSaved = Math.max(0, standardSchedule.payoffMonths - offsetSchedule.payoffMonths);
 
             offsetInterestSaved.textContent = formatAUD(interestSaved);
             offsetTimeSaved.textContent = formatMonthsToYears(monthsSaved);
@@ -1512,8 +1733,22 @@
             renderChart(standardSchedule, offsetSchedule);
         }
 
-        // Per-repayment schedule at the selected frequency (supports offset)
-        function generatePaymentSchedule(principal, annualRate, years, type, offset, perYear) {
+        // Group extra repayments by how many scheduled repayments fall on or before their date
+        // (0 = paid before the first repayment). dateForPeriod(k) is the date of repayment k.
+        function groupExtrasByPeriod(extras, dateForPeriod, maxPeriods) {
+            const groups = new Map();
+            [...extras].sort((a, b) => a.date.localeCompare(b.date)).forEach(extra => {
+                const paidOn = parseISODate(extra.date);
+                let k = 0;
+                while (k < maxPeriods && dateForPeriod(k + 1) <= paidOn) k++;
+                if (!groups.has(k)) groups.set(k, []);
+                groups.get(k).push(extra);
+            });
+            return groups;
+        }
+
+        // Per-repayment schedule at the selected frequency (supports offset and extra repayments)
+        function generatePaymentSchedule(principal, annualRate, years, type, offset, perYear, extrasByPeriod = new Map()) {
             const rate = annualRate / perYear;
             const totalPeriods = Math.round(years * perYear);
             const payment = rate > 0
@@ -1521,9 +1756,22 @@
                 : principal / totalPeriods;
 
             const rows = [];
+            const appliedExtras = [];
             let balance = principal;
 
-            for (let n = 1; n <= totalPeriods && balance > 0.005; n++) {
+            // Extras reduce the balance straight away; negative corrections add back to it
+            const applyExtras = (afterPeriod) => {
+                (extrasByPeriod.get(afterPeriod) || []).forEach(extra => {
+                    const applied = Math.min(extra.amount, balance);
+                    balance -= applied;
+                    appliedExtras.push({ ...extra, afterPeriod, applied, balanceAfter: balance });
+                });
+            };
+
+            for (let n = 1; n <= totalPeriods; n++) {
+                applyExtras(n - 1);
+                if (balance <= 0.005) break;
+
                 const interest = Math.max(0, balance - offset) * rate;
                 let principalPaid = type === 'IO' ? 0 : payment - interest;
                 if (principalPaid >= balance) principalPaid = balance;
@@ -1532,7 +1780,7 @@
                 rows.push({ n, interest, principal: principalPaid, payment: interest + principalPaid, balance });
             }
 
-            return { rows, scheduledPeriods: totalPeriods };
+            return { rows, appliedExtras, scheduledPeriods: totalPeriods };
         }
 
         // Payment tracker: payments made so far, next payment and overall progress
@@ -1553,40 +1801,51 @@
             const hasTracker = !!firstPayment && loanAmount > 0;
             document.getElementById('trackerEmpty').classList.toggle('hidden', hasTracker);
             document.getElementById('trackerContent').classList.toggle('hidden', !hasTracker);
-            if (!hasTracker) return;
+            if (!hasTracker) {
+                updatePaymentDueBanner(null, null);
+                return;
+            }
 
             const perYear = FREQUENCIES[state.frequency].perYear;
-            const offsetPlan = generatePaymentSchedule(loanAmount, annualRate, years, state.repaymentType, state.offsetBalance, perYear);
-            const standardPlan = generatePaymentSchedule(loanAmount, annualRate, years, state.repaymentType, 0, perYear);
-            const rows = offsetPlan.rows;
             // Count automatic dates from the start date so a 31st start stays on month-end (not stuck on the 28th)
             const anchor = state.firstPaymentDate ? firstPayment : parseISODate(state.loanStartDate);
             const shift = state.firstPaymentDate ? 0 : 1;
-            rows.forEach((row, i) => { row.date = addPeriods(anchor, i + shift, state.frequency); });
+            const dateForPeriod = (n) => addPeriods(anchor, n - 1 + shift, state.frequency);
+            const extrasByPeriod = groupExtrasByPeriod(state.extraRepayments, dateForPeriod, Math.round(years * perYear));
+
+            const offsetPlan = generatePaymentSchedule(loanAmount, annualRate, years, state.repaymentType, state.offsetBalance, perYear, extrasByPeriod);
+            const standardPlan = generatePaymentSchedule(loanAmount, annualRate, years, state.repaymentType, 0, perYear, extrasByPeriod);
+            const rows = offsetPlan.rows;
+            rows.forEach(row => { row.date = dateForPeriod(row.n); });
 
             const now = new Date();
             const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const todayISO = toISODate(today);
             document.getElementById('trackerAsOf').textContent = `As of ${formatDate(today)}`;
 
-            // A payment due today counts as made
-            let made = rows.findIndex(row => row.date > today);
+            // A payment due today is still "next" until the day has passed
+            let made = rows.findIndex(row => row.date >= today);
             if (made === -1) made = rows.length;
             const paidRows = rows.slice(0, made);
             const nextRow = rows[made];
+            const daysToNext = nextRow ? Math.round((nextRow.date - today) / 86400000) : null;
 
-            const principalPaid = paidRows.reduce((sum, row) => sum + row.principal, 0);
+            const extrasPaid = offsetPlan.appliedExtras
+                .filter(extra => extra.date <= todayISO)
+                .reduce((sum, extra) => sum + extra.applied, 0);
+            const principalPaid = paidRows.reduce((sum, row) => sum + row.principal, 0) + extrasPaid;
             const interestPaid = paidRows.reduce((sum, row) => sum + row.interest, 0);
             const totalPaid = principalPaid + interestPaid;
-            const balanceNow = made > 0 ? rows[made - 1].balance : loanAmount;
+            const balanceNow = Math.max(0, loanAmount - principalPaid);
             const standardInterestPaid = standardPlan.rows.slice(0, made).reduce((sum, row) => sum + row.interest, 0);
             const lastRow = rows[rows.length - 1];
 
+            updatePaymentDueBanner(nextRow, daysToNext);
+
             // Next payment
             if (nextRow) {
-                const days = Math.round((nextRow.date - today) / 86400000);
                 document.getElementById('trackerNextDate').textContent = formatDate(nextRow.date);
-                document.getElementById('trackerNextDetail').textContent =
-                    `${formatAUD(nextRow.payment)} · ${days === 1 ? 'tomorrow' : `in ${days} days`}`;
+                document.getElementById('trackerNextDetail').textContent = `${formatAUD(nextRow.payment)} · ${describeDays(daysToNext)}`;
             } else {
                 document.getElementById('trackerNextDate').textContent = 'Paid off';
                 document.getElementById('trackerNextDetail').textContent = 'No payments remaining';
@@ -1595,7 +1854,7 @@
             // Payments made / remaining
             document.getElementById('trackerPaymentsMade').textContent = `${made} of ${rows.length}`;
             document.getElementById('trackerPaymentsRemaining').textContent = rows.length < offsetPlan.scheduledPeriods
-                ? `${rows.length - made} left (${offsetPlan.scheduledPeriods} without offset)`
+                ? `${rows.length - made} left (${offsetPlan.scheduledPeriods} originally)`
                 : `${rows.length - made} remaining`;
 
             document.getElementById('trackerBalance').textContent = formatAUD(balanceNow);
@@ -1629,10 +1888,60 @@
             offsetSavedEl.classList.toggle('hidden', !(savedSoFar >= 1));
             offsetSavedEl.innerHTML = `<i class="fa-solid fa-piggy-bank mr-1"></i> Your offset has saved about ${formatAUD(savedSoFar)} in interest so far.`;
 
-            renderTrackerTable(rows, made);
+            renderTrackerTable(rows, made, offsetPlan.appliedExtras, daysToNext);
         }
 
-        function renderTrackerTable(rows, made) {
+        function describeDays(days) {
+            if (days === 0) return 'due today';
+            if (days === 1) return 'tomorrow';
+            return `in ${days} days`;
+        }
+
+        // Banner under the Scheduled Repayment header: amber within 5 days, red within 2 days
+        function updatePaymentDueBanner(nextRow, days) {
+            const banner = document.getElementById('paymentDueBanner');
+            if (!nextRow || days === null || days >= 5) {
+                banner.classList.add('hidden');
+                return;
+            }
+
+            const urgent = days <= 2;
+            banner.className = `mb-5 flex items-center gap-3 px-4 py-3 rounded-xl border text-sm ${urgent
+                ? 'bg-rose-50 border-rose-300 text-rose-800 dark:bg-rose-500/10 dark:border-rose-500/40 dark:text-rose-200'
+                : 'bg-amber-50 border-amber-300 text-amber-800 dark:bg-amber-500/10 dark:border-amber-500/40 dark:text-amber-200'}`;
+            document.getElementById('paymentDueIcon').className = `fa-solid ${urgent ? 'fa-circle-exclamation' : 'fa-bell'} text-base`;
+            document.getElementById('paymentDueTitle').textContent = days === 0
+                ? 'Repayment due today'
+                : days === 1 ? 'Repayment due tomorrow' : `Repayment due in ${days} days`;
+            document.getElementById('paymentDueDetail').textContent =
+                `${formatAUD(nextRow.payment)} on ${nextRow.date.toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' })}${urgent ? ' · make sure the funds are in your account' : ''}`;
+        }
+
+        // Log of extra repayments with remove buttons
+        function renderExtraRepaymentList() {
+            const list = document.getElementById('extraRepaymentList');
+            const extras = [...state.extraRepayments].sort((a, b) => b.date.localeCompare(a.date));
+
+            if (!extras.length) {
+                list.innerHTML = '<li class="pt-2 text-slate-500 dark:text-slate-400">No extra repayments logged yet.</li>';
+                return;
+            }
+
+            list.innerHTML = extras.map(extra => `
+                <li class="flex items-center justify-between gap-3 py-2">
+                    <span class="text-slate-600 dark:text-slate-300">${formatDate(parseISODate(extra.date))}</span>
+                    <span class="flex items-center gap-2">
+                        <span class="font-bold ${extra.amount > 0 ? 'text-sky-600 dark:text-sky-400' : 'text-rose-600 dark:text-rose-400'}">
+                            ${extra.amount > 0 ? '+' : ''}${formatAUD(extra.amount)}${extra.amount < 0 ? ' correction' : ''}
+                        </span>
+                        <button type="button" data-remove-extra="${extra.id}" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors" title="Remove" aria-label="Remove extra repayment">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </span>
+                </li>`).join('');
+        }
+
+        function renderTrackerTable(rows, made, appliedExtras, daysToNext) {
             const tbody = document.getElementById('trackerTableBody');
             const wrap = document.getElementById('trackerTableWrap');
             const showAllBtn = document.getElementById('trackerShowAllBtn');
@@ -1647,11 +1956,27 @@
 
             const statusBadge = (i) => {
                 if (i < made) return '<span class="ml-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-brand-500/15 text-brand-600 dark:text-brand-400">Paid</span>';
-                if (i === made) return '<span class="ml-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-indigo-500/15 text-indigo-600 dark:text-indigo-400">Next</span>';
+                if (i === made) return `<span class="ml-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-indigo-500/15 text-indigo-600 dark:text-indigo-400">${daysToNext === 0 ? 'Due today' : 'Next'}</span>`;
                 return '';
             };
 
-            tbody.innerHTML = rows.slice(start, end).map((row, offsetIndex) => {
+            // Extra repayments are listed straight after the repayment they follow
+            const extrasAfter = new Map();
+            appliedExtras.forEach(extra => {
+                if (!extrasAfter.has(extra.afterPeriod)) extrasAfter.set(extra.afterPeriod, []);
+                extrasAfter.get(extra.afterPeriod).push(extra);
+            });
+            const extraRows = (afterPeriod) => (extrasAfter.get(afterPeriod) || []).map(extra => `
+                    <tr class="bg-sky-50/70 dark:bg-sky-500/10">
+                        <td class="py-2 px-3 font-semibold text-sky-600 dark:text-sky-400"><i class="fa-solid fa-plus text-[10px]"></i></td>
+                        <td class="py-2 px-3 whitespace-nowrap">${formatDate(parseISODate(extra.date))}<span class="ml-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded ${extra.applied < 0 ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400' : 'bg-sky-500/15 text-sky-600 dark:text-sky-400'}">${extra.applied < 0 ? 'Correction' : 'Extra'}</span></td>
+                        <td class="py-2 px-3">${formatAUD(extra.applied)}</td>
+                        <td class="py-2 px-3 text-brand-600 dark:text-brand-400 font-medium">${formatAUD(extra.applied)}</td>
+                        <td class="py-2 px-3 text-slate-400">—</td>
+                        <td class="py-2 px-3 text-right font-semibold text-slate-900 dark:text-white">${formatAUD(extra.balanceAfter)}</td>
+                    </tr>`).join('');
+
+            tbody.innerHTML = (start === 0 ? extraRows(0) : '') + rows.slice(start, end).map((row, offsetIndex) => {
                 const i = start + offsetIndex;
                 const rowClass = i === made
                     ? 'bg-indigo-50/70 dark:bg-indigo-500/10'
@@ -1664,7 +1989,7 @@
                         <td class="py-2 px-3 text-brand-600 dark:text-brand-400 font-medium">${formatAUD(row.principal)}</td>
                         <td class="py-2 px-3 text-amber-600 dark:text-amber-400 font-medium">${formatAUD(row.interest)}</td>
                         <td class="py-2 px-3 text-right font-semibold text-slate-900 dark:text-white">${formatAUD(row.balance)}</td>
-                    </tr>`;
+                    </tr>` + extraRows(row.n);
             }).join('');
 
             // When showing the full schedule, scroll the next payment into view within the table
@@ -1674,8 +1999,9 @@
             }
         }
 
-        // Generate Detailed Amortization Breakdown (supports offset)
-        function generateAmortizationSchedule(principal, annualRate, years, type, offset) {
+        // Generate Detailed Amortization Breakdown (supports offset and extra repayments,
+        // grouped by the number of monthly repayments made before them)
+        function generateAmortizationSchedule(principal, annualRate, years, type, offset, extrasByMonth = new Map()) {
             const monthlyRate = annualRate / 12;
             const totalMonths = years * 12;
 
@@ -1715,7 +2041,7 @@
                         labels.push(`Year ${yearNum}`);
                         balanceHistory.push(0);
                         interestHistory.push(Math.round(cumulativeInterest));
-                        principalPaidHistory.push(Math.round(principal));
+                        principalPaidHistory.push(Math.round(cumulativePrincipal));
 
                         yearlySummary.push({
                             year: yearNum,
@@ -1727,6 +2053,14 @@
                     }
                     continue;
                 }
+
+                // Extra repayments made since the last repayment (negative = correction)
+                (extrasByMonth.get(m - 1) || []).forEach(extra => {
+                    const applied = Math.min(extra.amount, balance);
+                    balance -= applied;
+                    yearPrincipal += applied;
+                    cumulativePrincipal += applied;
+                });
 
                 // Balance subject to interest with offset cap
                 const effectiveBalance = Math.max(0, balance - offset);

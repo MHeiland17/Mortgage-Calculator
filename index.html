@@ -574,6 +574,15 @@
                     <p class="text-[11px] text-slate-400 mt-1">
                         Money in your offset account offsets interest daily, keeping payments fixed while reducing your loan duration.
                     </p>
+
+                    <label class="mt-3 flex items-start gap-2.5 cursor-pointer select-none sm:max-w-xl">
+                        <input type="checkbox" id="deductFromOffsetToggle" class="mt-0.5 w-4 h-4 shrink-0 rounded accent-brand-600 cursor-pointer">
+                        <span>
+                            <span class="text-sm font-semibold text-slate-200">Deduct repayments from offset</span>
+                            <span class="block text-[11px] text-slate-400">Each repayment is paid out of the offset account from your next repayment on, so the balance shrinks over time.</span>
+                        </span>
+                    </label>
+                    <p id="offsetDeductNote" class="hidden mt-2 sm:max-w-xl text-[11px] font-medium text-amber-300"></p>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -844,6 +853,7 @@
             extraRepayments: [], // [{ id, date: YYYY-MM-DD, amount }], negative amounts are corrections
             ratesPurpose: 'OWNER_OCCUPIED', // lender rate comparison: OWNER_OCCUPIED or INVESTMENT
             currentBank: '', // lender name the borrower is with, highlighted in the rates table
+            deductRepaymentsFromOffset: false, // repayments drawn from the offset account from the next repayment on
             sectionOrder: [...SECTION_IDS],
             paramsCollapsed: false,
             dutyExpanded: false
@@ -932,6 +942,7 @@
             if (!FREQUENCIES[merged.frequency]) merged.frequency = defaultState.frequency;
             if (!['OWNER_OCCUPIED', 'INVESTMENT'].includes(merged.ratesPurpose)) merged.ratesPurpose = defaultState.ratesPurpose;
             if (!LENDERS.some(l => l.name === merged.currentBank)) merged.currentBank = '';
+            merged.deductRepaymentsFromOffset = merged.deductRepaymentsFromOffset === true;
             if (!isValidISODate(merged.loanStartDate)) merged.loanStartDate = '';
             if (!isValidISODate(merged.firstPaymentDate)) merged.firstPaymentDate = '';
             merged.extraRepayments = Array.isArray(merged.extraRepayments)
@@ -1097,6 +1108,7 @@
             interestRateInput.value = state.interestRate;
             loanTermInput.value = state.loanTerm;
             fhbToggle.checked = state.isFHB;
+            document.getElementById('deductFromOffsetToggle').checked = state.deductRepaymentsFromOffset;
             loanStartDateInput.value = state.loanStartDate;
             firstPaymentDateInput.value = state.firstPaymentDate;
 
@@ -1514,6 +1526,11 @@
                 saveAndRecalculate();
             });
 
+            document.getElementById('deductFromOffsetToggle').addEventListener('change', (e) => {
+                state.deductRepaymentsFromOffset = e.target.checked;
+                saveAndRecalculate();
+            });
+
             // Offset Account Input
             offsetInput.addEventListener('input', (e) => {
                 let val = parseFloat(e.target.value);
@@ -1853,13 +1870,15 @@
             const freq = FREQUENCIES[state.frequency];
 
             // Extra repayments need a loan start date to know where they fall in the loan
-            const extrasByMonth = state.loanStartDate
-                ? groupExtrasByPeriod(state.extraRepayments, k => addMonthsClamped(parseISODate(state.loanStartDate), k), years * 12)
+            const monthDate = state.loanStartDate ? (k => addMonthsClamped(parseISODate(state.loanStartDate), k)) : null;
+            const extrasByMonth = monthDate
+                ? groupExtrasByPeriod(state.extraRepayments, monthDate, years * 12)
                 : new Map();
+            const drawdownFromMonth = offsetDrawdownStart(monthDate, years * 12);
 
             // Amortization Schedule Data Generation (with & without offset, both including extra repayments)
             const standardSchedule = generateAmortizationSchedule(loanAmount, r, years, state.repaymentType, 0, extrasByMonth);
-            const offsetSchedule = generateAmortizationSchedule(loanAmount, r, years, state.repaymentType, state.offsetBalance, extrasByMonth);
+            const offsetSchedule = generateAmortizationSchedule(loanAmount, r, years, state.repaymentType, state.offsetBalance, extrasByMonth, drawdownFromMonth);
 
             // Update Primary Display (Standard Scheduled Payment)
             repaymentAmount.textContent = formatAUD(activePayment);
@@ -1879,7 +1898,7 @@
             } else if (!state.loanStartDate) {
                 summaryExtraDetail.textContent = `${extrasCount} logged · set a loan start date to apply`;
             } else {
-                const noExtrasSchedule = generateAmortizationSchedule(loanAmount, r, years, state.repaymentType, state.offsetBalance);
+                const noExtrasSchedule = generateAmortizationSchedule(loanAmount, r, years, state.repaymentType, state.offsetBalance, new Map(), drawdownFromMonth);
                 const extrasInterestSaved = noExtrasSchedule.totalInterest - offsetSchedule.totalInterest;
                 summaryExtraDetail.textContent = `${extrasCount} payment${extrasCount === 1 ? '' : 's'} · ${extrasInterestSaved >= 0 ? 'saves' : 'adds'} ${formatAUD(Math.abs(extrasInterestSaved))} interest`;
             }
@@ -1900,6 +1919,7 @@
             offsetInterestSaved.textContent = formatAUD(interestSaved);
             offsetTimeSaved.textContent = formatMonthsToYears(monthsSaved);
             offsetNewTerm.textContent = formatMonthsToYears(offsetSchedule.payoffMonths);
+            updateOffsetDrawdownNote(loanAmount, r, years);
 
             // Frequency Grid
             freqWeeklyVal.textContent = formatAUD(weeklyPayment);
@@ -2421,8 +2441,58 @@
             return groups;
         }
 
-        // Per-repayment schedule at the selected frequency (supports offset and extra repayments)
-        function generatePaymentSchedule(principal, annualRate, years, type, offset, perYear, extrasByPeriod = new Map()) {
+        // When repayments come out of the offset, say how many it covers and roughly when it runs out
+        function updateOffsetDrawdownNote(loanAmount, annualRate, years) {
+            const note = document.getElementById('offsetDeductNote');
+            if (!state.deductRepaymentsFromOffset || state.offsetBalance <= 0 || loanAmount <= 0) {
+                note.classList.add('hidden');
+                return;
+            }
+
+            const freq = FREQUENCIES[state.frequency];
+            const totalPeriods = Math.round(years * freq.perYear);
+            const dateForPeriod = getPeriodDateFn();
+            const extras = dateForPeriod ? groupExtrasByPeriod(state.extraRepayments, dateForPeriod, totalPeriods) : new Map();
+            const drawdownFrom = offsetDrawdownStart(dateForPeriod, totalPeriods);
+            const plan = generatePaymentSchedule(loanAmount, annualRate, years, state.repaymentType, state.offsetBalance, freq.perYear, extras, drawdownFrom);
+
+            note.classList.remove('hidden');
+            if (plan.offsetRunsOutAt === null) {
+                note.textContent = 'Your offset balance lasts until the loan is paid off.';
+                return;
+            }
+            const covered = plan.offsetRunsOutAt - drawdownFrom + 1;
+            const when = dateForPeriod
+                ? ` and runs out around ${dateForPeriod(plan.offsetRunsOutAt).toLocaleDateString('en-AU', { month: 'long', year: 'numeric' })}`
+                : '';
+            note.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i>Your offset covers about ${covered} ${freq.name.toLowerCase()} repayment${covered === 1 ? '' : 's'}${when}. After that it no longer reduces your interest.`;
+        }
+
+        // Repayment number from which repayments come out of the offset (the next one due), or null when off.
+        // Without dates the drawdown starts at the first repayment.
+        function offsetDrawdownStart(dateForPeriod, maxPeriods) {
+            if (!state.deductRepaymentsFromOffset) return null;
+            if (!dateForPeriod) return 1;
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            let n = 1;
+            while (n < maxPeriods && dateForPeriod(n) < today) n++;
+            return n;
+        }
+
+        // Date of repayment n at the selected frequency, or null without a loan start date
+        function getPeriodDateFn() {
+            const firstPayment = getFirstPaymentDate();
+            if (!firstPayment) return null;
+            // Count automatic dates from the start date so a 31st start stays on month-end (not stuck on the 28th)
+            const anchor = state.firstPaymentDate ? firstPayment : parseISODate(state.loanStartDate);
+            const shift = state.firstPaymentDate ? 0 : 1;
+            return (n) => addPeriods(anchor, n - 1 + shift, state.frequency);
+        }
+
+        // Per-repayment schedule at the selected frequency (supports offset and extra repayments).
+        // From repayment `drawdownFrom` on, each repayment is taken out of the offset balance.
+        function generatePaymentSchedule(principal, annualRate, years, type, offset, perYear, extrasByPeriod = new Map(), drawdownFrom = null) {
             const rate = annualRate / perYear;
             const totalPeriods = Math.round(years * perYear);
             const payment = rate > 0
@@ -2442,19 +2512,27 @@
                 });
             };
 
+            let offsetLeft = offset;
+            let offsetRunsOutAt = null;
+
             for (let n = 1; n <= totalPeriods; n++) {
                 applyExtras(n - 1);
                 if (balance <= 0.005) break;
 
-                const interest = Math.max(0, balance - offset) * rate;
+                const interest = Math.max(0, balance - offsetLeft) * rate;
                 let principalPaid = type === 'IO' ? 0 : payment - interest;
                 if (principalPaid >= balance) principalPaid = balance;
 
                 balance = Math.max(0, balance - principalPaid);
                 rows.push({ n, interest, principal: principalPaid, payment: interest + principalPaid, balance });
+
+                if (drawdownFrom !== null && n >= drawdownFrom && offsetLeft > 0) {
+                    offsetLeft = Math.max(0, offsetLeft - (interest + principalPaid));
+                    if (offsetLeft === 0) offsetRunsOutAt = n;
+                }
             }
 
-            return { rows, appliedExtras, scheduledPeriods: totalPeriods };
+            return { rows, appliedExtras, scheduledPeriods: totalPeriods, offsetRunsOutAt };
         }
 
         // Payment tracker: payments made so far, next payment and overall progress
@@ -2481,13 +2559,12 @@
             }
 
             const perYear = FREQUENCIES[state.frequency].perYear;
-            // Count automatic dates from the start date so a 31st start stays on month-end (not stuck on the 28th)
-            const anchor = state.firstPaymentDate ? firstPayment : parseISODate(state.loanStartDate);
-            const shift = state.firstPaymentDate ? 0 : 1;
-            const dateForPeriod = (n) => addPeriods(anchor, n - 1 + shift, state.frequency);
-            const extrasByPeriod = groupExtrasByPeriod(state.extraRepayments, dateForPeriod, Math.round(years * perYear));
+            const dateForPeriod = getPeriodDateFn();
+            const totalPeriods = Math.round(years * perYear);
+            const extrasByPeriod = groupExtrasByPeriod(state.extraRepayments, dateForPeriod, totalPeriods);
+            const drawdownFrom = offsetDrawdownStart(dateForPeriod, totalPeriods);
 
-            const offsetPlan = generatePaymentSchedule(loanAmount, annualRate, years, state.repaymentType, state.offsetBalance, perYear, extrasByPeriod);
+            const offsetPlan = generatePaymentSchedule(loanAmount, annualRate, years, state.repaymentType, state.offsetBalance, perYear, extrasByPeriod, drawdownFrom);
             const standardPlan = generatePaymentSchedule(loanAmount, annualRate, years, state.repaymentType, 0, perYear, extrasByPeriod);
             const rows = offsetPlan.rows;
             rows.forEach(row => { row.date = dateForPeriod(row.n); });
@@ -2677,7 +2754,7 @@
 
         // Generate Detailed Amortization Breakdown (supports offset and extra repayments,
         // grouped by the number of monthly repayments made before them)
-        function generateAmortizationSchedule(principal, annualRate, years, type, offset, extrasByMonth = new Map()) {
+        function generateAmortizationSchedule(principal, annualRate, years, type, offset, extrasByMonth = new Map(), drawdownFromMonth = null) {
             const monthlyRate = annualRate / 12;
             const totalMonths = years * 12;
 
@@ -2709,6 +2786,7 @@
             let yearPrincipal = 0;
             let payoffMonths = totalMonths;
             let paidOff = false;
+            let offsetLeft = offset;
 
             for (let m = 1; m <= totalMonths; m++) {
                 if (paidOff) {
@@ -2739,7 +2817,7 @@
                 });
 
                 // Balance subject to interest with offset cap
-                const effectiveBalance = Math.max(0, balance - offset);
+                const effectiveBalance = Math.max(0, balance - offsetLeft);
                 let interestPayment = effectiveBalance * monthlyRate;
                 let principalPayment = monthlyPayment - interestPayment;
 
@@ -2755,6 +2833,11 @@
 
                 balance -= principalPayment;
                 if (balance < 0) balance = 0;
+
+                // Repayments drawn from the offset account shrink it from the drawdown month on
+                if (drawdownFromMonth !== null && m >= drawdownFromMonth && offsetLeft > 0) {
+                    offsetLeft = Math.max(0, offsetLeft - (interestPayment + principalPayment));
+                }
 
                 yearInterest += interestPayment;
                 yearPrincipal += principalPayment;

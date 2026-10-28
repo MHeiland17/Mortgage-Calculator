@@ -142,6 +142,23 @@
         </div>
     </header>
 
+    <!-- Interest rate doesn't match the selected current bank -->
+    <div id="rateMismatchBanner" role="alert" class="hidden bg-rose-500/15 border-b border-rose-500/40">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+            <div class="flex items-start gap-3 flex-1 min-w-0">
+                <i class="fa-solid fa-triangle-exclamation text-rose-400 text-2xl mt-0.5"></i>
+                <div class="min-w-0">
+                    <p id="rateMismatchTitle" class="font-bold text-rose-100 text-base"></p>
+                    <p id="rateMismatchDetail" class="text-sm text-rose-200/80"></p>
+                </div>
+            </div>
+            <div class="flex flex-wrap gap-2 shrink-0 sm:pl-0 pl-9">
+                <button id="rateMismatchUseBtn" type="button" class="px-3.5 py-2 rounded-lg bg-rose-500 hover:bg-rose-400 text-white text-sm font-bold transition-colors"></button>
+                <button id="rateMismatchViewBtn" type="button" class="px-3.5 py-2 rounded-lg border border-rose-400/50 text-rose-100 hover:bg-rose-500/20 text-sm font-semibold transition-colors"></button>
+            </div>
+        </div>
+    </div>
+
     <!-- Collapsible Loan Parameters Header Section -->
     <section id="paramsPanel" class="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-slate-800 shadow-sm">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -194,7 +211,10 @@
 
                     <!-- Interest Rate -->
                     <div>
-                        <label for="interestRateInput" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Interest Rate (% p.a.)</label>
+                        <label for="interestRateInput" id="interestRateLabel" class="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                            Interest Rate (% p.a.)
+                            <i id="interestRateWarning" class="hidden fa-solid fa-triangle-exclamation text-rose-400" title="Doesn't match your current bank's rates"></i>
+                        </label>
                         <div class="relative rounded-xl shadow-sm">
                             <input type="number" id="interestRateInput" value="6.14" step="0.05" min="0.01" max="25" class="w-full pr-8 pl-4 py-2.5 text-slate-900 dark:text-white text-base font-bold bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all">
                             <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 font-semibold text-sm">%</span>
@@ -561,28 +581,32 @@
                     <div data-section-controls></div>
                 </div>
 
-                <!-- Offset Account Input -->
-                <div class="mb-5">
-                    <label for="offsetInput" class="text-sm font-semibold text-slate-200 flex items-center mb-1.5">
-                        Current Offset Account Balance
-                        <i class="fa-solid fa-circle-info ml-1.5 text-slate-400 text-xs" title="Money in an offset account reduces the loan balance on which interest is charged."></i>
-                    </label>
-                    <div class="relative rounded-xl shadow-sm sm:max-w-sm">
-                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 font-semibold text-sm">$</span>
-                        <input type="number" id="offsetInput" value="50000" step="5000" min="0" class="w-full pl-8 pr-4 py-2.5 text-white text-base font-bold bg-slate-900/70 border border-emerald-500/30 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all">
+                <!-- Offset balance and repayment drawdown option: side by side, stacked on mobile -->
+                <div class="mb-5 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 items-start">
+                    <div>
+                        <label for="offsetInput" class="text-sm font-semibold text-slate-200 flex items-center mb-1.5">
+                            Current Offset Account Balance
+                            <i class="fa-solid fa-circle-info ml-1.5 text-slate-400 text-xs" title="Money in an offset account reduces the loan balance on which interest is charged."></i>
+                        </label>
+                        <div class="relative rounded-xl shadow-sm">
+                            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 font-semibold text-sm">$</span>
+                            <input type="number" id="offsetInput" value="50000" step="5000" min="0" class="w-full pl-8 pr-4 py-2.5 text-white text-base font-bold bg-slate-900/70 border border-emerald-500/30 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all">
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-1">
+                            Money in your offset account offsets interest daily, keeping payments fixed while reducing your loan duration.
+                        </p>
                     </div>
-                    <p class="text-[11px] text-slate-400 mt-1">
-                        Money in your offset account offsets interest daily, keeping payments fixed while reducing your loan duration.
-                    </p>
 
-                    <label class="mt-3 flex items-start gap-2.5 cursor-pointer select-none sm:max-w-xl">
-                        <input type="checkbox" id="deductFromOffsetToggle" class="mt-0.5 w-4 h-4 shrink-0 rounded accent-brand-600 cursor-pointer">
-                        <span>
-                            <span class="text-sm font-semibold text-slate-200">Deduct repayments from offset</span>
-                            <span class="block text-[11px] text-slate-400">Each repayment is paid out of the offset account from your next repayment on, so the balance shrinks over time.</span>
-                        </span>
-                    </label>
-                    <p id="offsetDeductNote" class="hidden mt-2 sm:max-w-xl text-[11px] font-medium text-amber-300"></p>
+                    <div class="sm:mt-[1.625rem]">
+                        <label class="flex items-start gap-2.5 cursor-pointer select-none px-3.5 py-2.5 rounded-xl bg-slate-900/40 border border-emerald-500/20 hover:border-emerald-500/40 transition-colors">
+                            <input type="checkbox" id="deductFromOffsetToggle" class="mt-0.5 w-4 h-4 shrink-0 rounded accent-brand-600 cursor-pointer">
+                            <span>
+                                <span class="text-sm font-semibold text-slate-200">Deduct repayments from offset</span>
+                                <span class="block text-[11px] text-slate-400">Each repayment is paid out of the offset account from your next repayment on, so the balance shrinks over time.</span>
+                            </span>
+                        </label>
+                        <p id="offsetDeductNote" class="hidden mt-2 text-[11px] font-medium text-amber-300"></p>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -914,6 +938,7 @@
         let bankRates = null; // { fetchedAt, lenders: [{ name, ok, error, rates: [...] }] }
         let bankRatesLoading = false;
         let rateHistory = { since: null, rates: {} }; // { since, rates: { key: { rate, previous, changedAt } } }
+        let rateMismatch = null; // { lender, variable, fixed } when the entered rate isn't one of the current bank's rates
 
         // Undo / redo history of state snapshots (view-only settings are left out)
         const HISTORY_IGNORED_KEYS = ['paramsCollapsed', 'dutyExpanded', 'chartMode', 'ratesPurpose'];
@@ -1423,17 +1448,21 @@
         }
 
         function updateParamsSummary(loanAmount) {
+            // The rate chip turns red with a warning icon when it doesn't match the current bank
             const chips = [
                 ['fa-sack-dollar', `${formatAUDWhole(loanAmount)} loan`],
                 ['fa-house', `${formatAUDWhole(state.propertyPrice)} price`],
-                ['fa-percent', `${state.interestRate}% p.a.`],
+                [rateMismatch ? 'fa-triangle-exclamation' : 'fa-percent', `${state.interestRate}% p.a.`, !!rateMismatch],
                 ['fa-hourglass-half', `${state.loanTerm} yrs`]
             ];
             if (state.loanStartDate) chips.push(['fa-calendar-day', `Started ${formatDate(parseISODate(state.loanStartDate))}`]);
-            document.getElementById('paramsSummary').innerHTML = chips.map(([icon, text]) => `
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200">
-                    <i class="fa-solid ${icon} text-slate-400 text-[10px]"></i>${text}
-                </span>`).join('');
+            document.getElementById('paramsSummary').innerHTML = chips.map(([icon, text, warn]) => warn
+                ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-500/20 border border-rose-500/50 text-xs font-bold text-rose-300" title="Doesn't match ${escapeHtml(rateMismatch.lender)}'s current rates">
+                       <i class="fa-solid ${icon} text-rose-400 text-[10px]"></i>${text}
+                   </span>`
+                : `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200">
+                       <i class="fa-solid ${icon} text-slate-400 text-[10px]"></i>${text}
+                   </span>`).join('');
         }
 
         // Setup UI Event Listeners
@@ -1620,6 +1649,19 @@
             });
 
             document.getElementById('bankRatesRefreshBtn').addEventListener('click', () => loadBankRates());
+
+            // Rate mismatch banner: switch to the bank's suggested rate, or jump to its row in the rates table
+            document.getElementById('rateMismatchUseBtn').addEventListener('click', (e) => {
+                state.interestRate = parseFloat(e.currentTarget.dataset.useRate);
+                interestRateInput.value = state.interestRate;
+                saveAndRecalculate();
+                showToast(`Interest rate set to ${state.interestRate}% (${e.currentTarget.dataset.rateLabel})`, 'fa-percent');
+            });
+            document.getElementById('rateMismatchViewBtn').addEventListener('click', () => {
+                const section = sectionsContainer.querySelector('[data-section-id="rates"]');
+                const row = section.querySelector('#bankRatesTableBody tr.bg-brand-500\\/15') || section;
+                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            });
 
             sectionsContainer.querySelector('[data-section-id="rates"]').addEventListener('click', (e) => {
                 // Current bank: pick a lender, or unselect the one already picked
@@ -2022,6 +2064,11 @@
         // Load rates the first time the section scrolls into view, if the cached copy is missing or old
         function setupBankRatesAutoLoad() {
             const isStale = () => !bankRates || Date.now() - bankRates.fetchedAt > RATES_MAX_AGE_MS;
+            // With a current bank chosen, load straight away so the rate mismatch check has fresh rates
+            if (state.currentBank && isStale()) {
+                loadBankRates();
+                return;
+            }
             const section = sectionsContainer.querySelector('[data-section-id="rates"]');
             if (!('IntersectionObserver' in window)) {
                 if (isStale()) loadBankRates();
@@ -2295,6 +2342,64 @@
             return `${Math.round(hours / 24)} days ago`;
         }
 
+        // A lender's rates that fit the current loan: purpose, repayment type, LVR, loan size and eligibility
+        function matchingLenderRates(lender) {
+            const loanAmount = Math.max(0, state.propertyPrice - state.deposit);
+            const lvr = state.propertyPrice > 0 ? loanAmount / state.propertyPrice : 0;
+            const interestOnly = state.repaymentType === 'IO';
+            const within = (value, range) => !range || (value >= range[0] - 1e-9 && (range[1] === null || value <= range[1] + 1e-9));
+            const eligible = lender.products.filter(product =>
+                product.eligibility === 'general' || (product.eligibility === 'first-home' && state.isFHB));
+            return eligible.flatMap(product => product.rates
+                .filter(r => r.purpose === state.ratesPurpose && r.interestOnly === interestOnly && within(lvr, r.lvr) && within(loanAmount, r.balance))
+                .map(r => ({ ...r, product: product.name, url: product.url, lender: lender.name })));
+        }
+
+        function lowestRate(rates) {
+            return rates.reduce((best, r) => (!best || r.rate < best.rate ? r : best), null);
+        }
+
+        // Warn when the entered interest rate isn't one of the selected current bank's rates for this loan
+        function updateRateAlignment() {
+            rateMismatch = null;
+            const lender = state.currentBank && bankRates && bankRates.lenders.find(l => l.name === state.currentBank);
+            const matches = lender ? matchingLenderRates(lender) : [];
+            if (matches.length && !matches.some(r => Math.abs(r.rate * 100 - state.interestRate) < 0.005)) {
+                rateMismatch = {
+                    lender: lender.name,
+                    variable: lowestRate(matches.filter(r => r.type === 'VARIABLE')),
+                    fixed: lowestRate(matches.filter(r => r.type === 'FIXED'))
+                };
+            }
+
+            const banner = document.getElementById('rateMismatchBanner');
+            banner.classList.toggle('hidden', !rateMismatch);
+            document.getElementById('interestRateWarning').classList.toggle('hidden', !rateMismatch);
+            document.getElementById('interestRateLabel').classList.toggle('!text-rose-400', !!rateMismatch);
+            ['!border-rose-500', 'ring-1', 'ring-rose-500/60'].forEach(cls => interestRateInput.classList.toggle(cls, !!rateMismatch));
+
+            if (rateMismatch) {
+                const pct = (rate) => (rate * 100).toFixed(2);
+                const suggestion = rateMismatch.variable || rateMismatch.fixed;
+                const fixedTerm = (months) => !months ? 'fixed' : months % 12 === 0 ? `${months / 12} yr fixed` : `${months} mth fixed`;
+                const options = [
+                    rateMismatch.variable && `${pct(rateMismatch.variable.rate)}% variable (${rateMismatch.variable.product})`,
+                    rateMismatch.fixed && `${pct(rateMismatch.fixed.rate)}% ${fixedTerm(rateMismatch.fixed.fixedMonths)}`
+                ].filter(Boolean).join(' or ');
+
+                document.getElementById('rateMismatchTitle').textContent = `Your interest rate doesn't match ${rateMismatch.lender}`;
+                document.getElementById('rateMismatchDetail').textContent =
+                    `You've entered ${state.interestRate}%, which isn't one of ${rateMismatch.lender}'s current rates for your loan. Their lowest is ${options}.`;
+                const useBtn = document.getElementById('rateMismatchUseBtn');
+                useBtn.textContent = `Use ${pct(suggestion.rate)}%`;
+                useBtn.dataset.useRate = pct(suggestion.rate);
+                useBtn.dataset.rateLabel = `${suggestion.lender} ${suggestion.product}`;
+                document.getElementById('rateMismatchViewBtn').textContent = `View ${rateMismatch.lender} rates`;
+            }
+
+            updateParamsSummary(Math.max(0, state.propertyPrice - state.deposit));
+        }
+
         function renderBankRates() {
             const loanAmount = Math.max(0, state.propertyPrice - state.deposit);
             const lvr = state.propertyPrice > 0 ? loanAmount / state.propertyPrice : 0;
@@ -2309,24 +2414,19 @@
             const headline = document.getElementById('bankRatesHeadline');
             if (!bankRates) {
                 headline.classList.add('hidden');
+                updateRateAlignment();
                 return;
             }
 
-            const within = (value, range) => !range || (value >= range[0] - 1e-9 && (range[1] === null || value <= range[1] + 1e-9));
-            const lowest = (rates) => rates.reduce((best, r) => (!best || r.rate < best.rate ? r : best), null);
-
             const rows = bankRates.lenders.map(lender => {
-                const eligible = lender.products.filter(product =>
-                    product.eligibility === 'general' || (product.eligibility === 'first-home' && state.isFHB));
-                const matches = eligible.flatMap(product => product.rates
-                    .filter(r => r.purpose === state.ratesPurpose && r.interestOnly === interestOnly && within(lvr, r.lvr) && within(loanAmount, r.balance))
-                    .map(r => ({ ...r, product: product.name, url: product.url, lender: lender.name })));
+                const matches = matchingLenderRates(lender);
                 return {
                     lender,
-                    variable: lowest(matches.filter(r => r.type === 'VARIABLE')),
-                    fixed: lowest(matches.filter(r => r.type === 'FIXED'))
+                    variable: lowestRate(matches.filter(r => r.type === 'VARIABLE')),
+                    fixed: lowestRate(matches.filter(r => r.type === 'FIXED'))
                 };
             }).sort((a, b) => ((a.variable || a.fixed || { rate: 1 }).rate) - ((b.variable || b.fixed || { rate: 1 }).rate));
+            const lowest = lowestRate;
 
             const pct = (rate) => (rate * 100).toFixed(2);
             const productLabel = (r) => r.url
@@ -2425,6 +2525,8 @@
             document.getElementById('bankRatesUpdated').textContent = bankRatesLoading
                 ? 'Fetching the latest rates from each lender…'
                 : `Updated ${timeAgo(bankRates.fetchedAt)} · ${okCount} of ${LENDERS.length} lenders responded. Rates come from each lender's public Open Banking (Consumer Data Right) product data, matched to your loan type, repayment type, LVR and loan size. Arrows show the last change to each rate seen in this browser (tracking${trackingSince}); a dash means no change seen yet.`;
+
+            updateRateAlignment();
         }
 
         // Group extra repayments by how many scheduled repayments fall on or before their date

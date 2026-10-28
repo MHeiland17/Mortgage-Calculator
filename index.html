@@ -53,13 +53,23 @@
             border-radius: 3px;
         }
         /* Hide number input arrows for clean modern aesthetic */
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
             -webkit-appearance: none;
-            margin: 0; 
+            margin: 0;
         }
         input[type=number] {
             -moz-appearance: textfield;
+        }
+        /* Make the native date picker icon visible in dark mode */
+        .dark input[type=date]::-webkit-calendar-picker-indicator {
+            filter: invert(0.8);
+        }
+        /* Section being dragged */
+        .section-dragging {
+            opacity: 0.4;
+            outline: 2px dashed #22c55e;
+            outline-offset: 4px;
         }
     </style>
 </head>
@@ -73,35 +83,45 @@
 
     <!-- Header Navigation -->
     <header class="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-navy-900/80 backdrop-blur sticky top-0 z-30">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center text-white shadow-md shadow-brand-500/20">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            <div class="flex items-center space-x-3 min-w-0">
+                <div class="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center text-white shadow-md shadow-brand-500/20">
                     <i class="fa-solid fa-house-chimney-crack text-lg"></i>
                 </div>
-                <div>
-                    <div class="flex items-center space-x-2">
-                        <h1 class="font-bold text-lg leading-tight tracking-tight">NSW Mortgage Calculator</h1>
-                        <span class="text-[10px] bg-brand-500/20 text-brand-400 border border-brand-500/30 font-semibold px-2 py-0.5 rounded-full hidden sm:inline-block">JSON Data Export</span>
-                    </div>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">Australia • New South Wales Rates, Offset & Duty</p>
+                <div class="min-w-0">
+                    <h1 class="font-bold text-base sm:text-lg leading-tight tracking-tight truncate">NSW Mortgage Calculator</h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 hidden sm:block truncate">Australia • New South Wales Rates, Offset & Duty</p>
                 </div>
             </div>
 
-            <div class="flex items-center space-x-2 sm:space-x-3">
+            <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
                 <!-- Auto-Saved LocalStorage Status Indicator -->
-                <div class="hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300" title="Inputs are automatically stored in your browser's local storage">
+                <div class="hidden lg:flex items-center space-x-1.5 px-3 py-1.5 mr-1 rounded-lg bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300" title="Inputs are automatically stored in your browser's local storage">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span class="font-medium">Auto-saved to Browser</span>
+                    <span class="font-medium">Auto-saved</span>
                 </div>
 
+                <!-- Data Management: Import / Export / Copy -->
+                <label class="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors text-sm cursor-pointer" title="Import scenario (JSON)" aria-label="Import scenario from JSON file">
+                    <i class="fa-solid fa-upload"></i>
+                    <input type="file" id="importJsonInput" accept=".json,application/json" class="hidden">
+                </label>
+                <button id="exportJsonBtn" class="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors text-sm" title="Export scenario (JSON)" aria-label="Export scenario to JSON file">
+                    <i class="fa-solid fa-download"></i>
+                </button>
+                <button id="copyConfigBtn" class="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors text-sm" title="Copy scenario to clipboard" aria-label="Copy scenario to clipboard">
+                    <i class="fa-solid fa-copy"></i>
+                </button>
+
+                <span class="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-0.5 sm:mx-1"></span>
+
                 <!-- Reset Defaults Button -->
-                <button id="resetDefaultsBtn" class="px-3 py-2 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors flex items-center space-x-1.5" title="Reset to Defaults">
-                    <i class="fa-solid fa-rotate-left text-slate-400"></i>
-                    <span class="hidden sm:inline">Reset Defaults</span>
+                <button id="resetDefaultsBtn" class="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors text-sm" title="Reset to defaults" aria-label="Reset to defaults">
+                    <i class="fa-solid fa-rotate-left"></i>
                 </button>
 
                 <!-- Theme Toggle (Defaults to Dark) -->
-                <button id="themeToggle" class="p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors" title="Toggle Light/Dark Theme">
+                <button id="themeToggle" class="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors text-sm" title="Toggle Light/Dark Theme" aria-label="Toggle light or dark theme">
                     <i class="fa-solid fa-moon dark:hidden text-indigo-600"></i>
                     <i class="fa-solid fa-sun hidden dark:block text-amber-400"></i>
                 </button>
@@ -109,231 +129,199 @@
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Collapsible Loan Parameters Header Section -->
+    <section id="paramsPanel" class="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-slate-800 shadow-sm">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <button id="paramsToggle" type="button" aria-expanded="true" aria-controls="paramsBody" class="w-full flex items-center justify-between gap-3 py-4 text-left">
+                <span class="flex items-center gap-2.5">
+                    <i class="fa-solid fa-sliders text-brand-600"></i>
+                    <span class="text-lg font-bold text-slate-900 dark:text-white">Loan Parameters</span>
+                    <span id="savedBadge" class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium opacity-0 transition-opacity flex items-center">
+                        <i class="fa-solid fa-floppy-disk mr-1"></i> Saved locally
+                    </span>
+                </span>
+                <span class="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                    <span id="paramsToggleLabel">Collapse</span>
+                    <i id="paramsChevron" class="fa-solid fa-chevron-up transition-transform"></i>
+                </span>
+            </button>
 
-        <!-- Main Grid Layout -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Collapsed summary chips -->
+            <div id="paramsSummary" class="hidden pb-4 -mt-1 flex flex-wrap gap-1.5 cursor-pointer" title="Expand loan parameters"></div>
 
-            <!-- LEFT COLUMN: Input Controls & Data Management -->
-            <div class="lg:col-span-5 space-y-6">
-                
-                <!-- Inputs Card -->
-                <div class="bg-white dark:bg-navy-900 rounded-2xl p-6 shadow-sm border border-slate-200/80 dark:border-slate-800">
-                    <div class="flex justify-between items-center mb-5">
-                        <h2 class="text-lg font-bold flex items-center text-slate-900 dark:text-white">
-                            <i class="fa-solid fa-sliders text-brand-600 mr-2.5"></i> Loan Parameters
-                        </h2>
-                        <span id="savedBadge" class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium opacity-0 transition-opacity flex items-center">
-                            <i class="fa-solid fa-floppy-disk mr-1"></i> Saved locally
-                        </span>
+            <div id="paramsBody" class="pb-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-5">
+
+                    <!-- Property Value -->
+                    <div>
+                        <label for="propertyPriceInput" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Property Purchase Price</label>
+                        <div class="relative rounded-xl shadow-sm">
+                            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 font-semibold text-sm">$</span>
+                            <input type="number" id="propertyPriceInput" value="950000" step="5000" min="0" class="w-full pl-8 pr-4 py-2.5 text-slate-900 dark:text-white text-base font-bold bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all">
+                        </div>
                     </div>
 
-                    <div class="space-y-5">
-
-                        <!-- Property Value -->
-                        <div>
-                            <label for="propertyPriceInput" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Property Purchase Price</label>
-                            <div class="relative rounded-xl shadow-sm">
+                    <!-- Deposit Amount & Percentage -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label for="depositInput" class="text-sm font-semibold text-slate-700 dark:text-slate-300">Deposit ($ AUD)</label>
+                            <span id="depositPctLabel" class="text-xs font-bold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/30 px-2 py-0.5 rounded-md">(20%)</span>
+                        </div>
+                        <div class="grid grid-cols-5 gap-2">
+                            <div class="relative rounded-xl shadow-sm col-span-3">
                                 <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 font-semibold text-sm">$</span>
-                                <input type="number" id="propertyPriceInput" value="950000" step="5000" min="0" class="w-full pl-8 pr-4 py-2.5 text-slate-900 dark:text-white text-base font-bold bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all">
+                                <input type="number" id="depositInput" value="190000" step="5000" min="0" class="w-full pl-8 pr-3 py-2.5 text-slate-900 dark:text-white text-sm font-bold bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all">
                             </div>
-                        </div>
-
-                        <!-- Deposit Amount & Percentage -->
-                        <div>
-                            <div class="flex justify-between items-center mb-1.5">
-                                <label for="depositInput" class="text-sm font-semibold text-slate-700 dark:text-slate-300">Deposit ($ AUD)</label>
-                                <span id="depositPctLabel" class="text-xs font-bold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/30 px-2 py-0.5 rounded-md">(20%)</span>
-                            </div>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div class="relative rounded-xl shadow-sm">
-                                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 font-semibold text-sm">$</span>
-                                    <input type="number" id="depositInput" value="190000" step="5000" min="0" class="w-full pl-8 pr-4 py-2 text-slate-900 dark:text-white text-sm font-bold bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all">
-                                </div>
-                                <div class="relative rounded-xl shadow-sm">
-                                    <input type="number" id="depositPercentInput" value="20" step="1" min="0" max="100" class="w-full pr-8 pl-4 py-2 text-right text-slate-900 dark:text-white text-sm font-bold bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all">
-                                    <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 font-semibold text-sm">%</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Amount Borrowed / Loan Amount -->
-                        <div class="py-3 px-4 bg-brand-50/60 dark:bg-brand-900/20 rounded-xl border border-brand-100 dark:border-brand-900/40">
-                            <div class="flex justify-between items-center">
-                                <span class="text-xs font-bold text-brand-900 dark:text-brand-200 uppercase tracking-wider">Loan Amount Borrowed</span>
-                                <span id="loanAmountDisplay" class="text-lg font-extrabold text-brand-700 dark:text-brand-400">$760,000</span>
-                            </div>
-                        </div>
-
-                        <!-- Offset Account Input -->
-                        <div>
-                            <div class="flex justify-between items-center mb-1.5">
-                                <label for="offsetInput" class="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center">
-                                    Offset Account Balance
-                                    <i class="fa-solid fa-circle-info ml-1.5 text-slate-400 text-xs" title="Money in an offset account reduces the loan balance on which interest is charged."></i>
-                                </label>
-                                <span class="text-xs text-slate-400">Optional</span>
-                            </div>
-                            <div class="relative rounded-xl shadow-sm">
-                                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 font-semibold text-sm">$</span>
-                                <input type="number" id="offsetInput" value="50000" step="5000" min="0" class="w-full pl-8 pr-4 py-2.5 text-slate-900 dark:text-white text-base font-bold bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all">
-                            </div>
-                            <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
-                                Money in your offset account offsets interest daily, keeping payments fixed while reducing your loan duration.
-                            </p>
-                        </div>
-
-                        <!-- Interest Rate -->
-                        <div>
-                            <label for="interestRateInput" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Interest Rate (% p.a.)</label>
-                            <div class="relative rounded-xl shadow-sm">
-                                <input type="number" id="interestRateInput" value="6.14" step="0.05" min="0.01" max="25" class="w-full pr-8 pl-4 py-2.5 text-slate-900 dark:text-white text-base font-bold bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all">
+                            <div class="relative rounded-xl shadow-sm col-span-2">
+                                <input type="number" id="depositPercentInput" value="20" step="1" min="0" max="100" aria-label="Deposit percentage" class="w-full pr-8 pl-3 py-2.5 text-right text-slate-900 dark:text-white text-sm font-bold bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all">
                                 <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 font-semibold text-sm">%</span>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Loan Term -->
-                        <div>
-                            <div class="flex justify-between items-center mb-1.5">
-                                <label for="loanTermInput" class="text-sm font-semibold text-slate-700 dark:text-slate-300">Loan Term (Years)</label>
-                                <div class="relative w-24">
-                                    <input type="number" id="loanTermInput" value="30" min="1" max="40" class="w-full pr-8 pl-3 py-1 text-right text-sm font-bold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                                    <span class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 text-xs">yrs</span>
+                    <!-- Interest Rate -->
+                    <div>
+                        <label for="interestRateInput" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Interest Rate (% p.a.)</label>
+                        <div class="relative rounded-xl shadow-sm">
+                            <input type="number" id="interestRateInput" value="6.14" step="0.05" min="0.01" max="25" class="w-full pr-8 pl-4 py-2.5 text-slate-900 dark:text-white text-base font-bold bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all">
+                            <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 font-semibold text-sm">%</span>
+                        </div>
+                    </div>
+
+                    <!-- Loan Term -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label for="loanTermInput" class="text-sm font-semibold text-slate-700 dark:text-slate-300">Loan Term (Years)</label>
+                            <div class="relative w-24">
+                                <input type="number" id="loanTermInput" value="30" min="1" max="40" class="w-full pr-8 pl-3 py-1 text-right text-sm font-bold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                <span class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 text-xs">yrs</span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-5 gap-1.5 mt-2">
+                            <button type="button" class="term-btn py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" data-years="10">10 yrs</button>
+                            <button type="button" class="term-btn py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" data-years="15">15 yrs</button>
+                            <button type="button" class="term-btn py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" data-years="20">20 yrs</button>
+                            <button type="button" class="term-btn py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" data-years="25">25 yrs</button>
+                            <button type="button" class="term-btn active bg-brand-600 text-white py-1.5 text-xs font-semibold rounded-lg transition-colors" data-years="30">30 yrs</button>
+                        </div>
+                    </div>
+
+                    <!-- Repayment Frequency -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Repayment Frequency</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button type="button" class="freq-btn text-xs font-semibold py-2.5 px-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-center" data-freq="weekly">
+                                Weekly
+                            </button>
+                            <button type="button" class="freq-btn text-xs font-semibold py-2.5 px-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-center" data-freq="fortnightly">
+                                Fortnightly
+                            </button>
+                            <button type="button" class="freq-btn active bg-brand-600 text-white font-bold text-xs py-2.5 px-3 rounded-xl shadow-sm transition-all text-center" data-freq="monthly">
+                                Monthly
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Repayment Type Toggle -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Repayment Type</label>
+                        <div class="grid grid-cols-2 gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                            <button type="button" id="typePI" class="type-btn text-xs font-bold py-2 rounded-lg bg-white dark:bg-navy-900 shadow-sm text-slate-900 dark:text-white transition-all">
+                                Principal & Interest
+                            </button>
+                            <button type="button" id="typeIO" class="type-btn text-xs font-semibold py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all">
+                                Interest Only
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Amount Borrowed / Loan Amount -->
+                <div class="mt-6 py-3 px-4 bg-brand-50/60 dark:bg-brand-900/20 rounded-xl border border-brand-100 dark:border-brand-900/40">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-brand-900 dark:text-brand-200 uppercase tracking-wider">Loan Amount Borrowed</span>
+                        <span id="loanAmountDisplay" class="text-lg font-extrabold text-brand-700 dark:text-brand-400">$760,000</span>
+                    </div>
+                </div>
+
+                <!-- Expandable NSW Transfer Duty Estimate -->
+                <div class="mt-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                    <button id="dutyToggle" type="button" aria-expanded="false" aria-controls="dutyBody" class="w-full flex items-center justify-between gap-3 px-4 py-3 text-left rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                        <span class="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
+                            <i class="fa-solid fa-map-location-dot text-indigo-500"></i> NSW Transfer Duty Estimate
+                        </span>
+                        <span class="flex items-center gap-3">
+                            <span id="dutyHeadlineAmount" class="text-sm font-bold text-slate-700 dark:text-slate-200">$38,440</span>
+                            <i id="dutyChevron" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform"></i>
+                        </span>
+                    </button>
+
+                    <div id="dutyBody" class="hidden px-4 pb-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-4">
+                                <!-- Buyer Type Toggle -->
+                                <div class="flex items-center justify-between text-xs sm:text-sm">
+                                    <span class="text-slate-600 dark:text-slate-300 font-medium">First Home Buyer Scheme?</span>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="fhbToggle" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-brand-600"></div>
+                                    </label>
+                                </div>
+
+                                <!-- Buyer Status -->
+                                <div class="grid grid-cols-2 gap-2 text-xs">
+                                    <label class="flex items-center p-2 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800">
+                                        <input type="radio" name="propertyType" value="existing" checked class="text-brand-600 focus:ring-brand-500">
+                                        <span class="ml-2 font-medium text-slate-700 dark:text-slate-300">Established Home</span>
+                                    </label>
+                                    <label class="flex items-center p-2 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800">
+                                        <input type="radio" name="propertyType" value="vacant" class="text-brand-600 focus:ring-brand-500">
+                                        <span class="ml-2 font-medium text-slate-700 dark:text-slate-300">Vacant Land</span>
+                                    </label>
                                 </div>
                             </div>
-                            <div class="grid grid-cols-5 gap-2 mt-2">
-                                <button type="button" class="term-btn py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" data-years="10">10 yrs</button>
-                                <button type="button" class="term-btn py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" data-years="15">15 yrs</button>
-                                <button type="button" class="term-btn py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" data-years="20">20 yrs</button>
-                                <button type="button" class="term-btn py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" data-years="25">25 yrs</button>
-                                <button type="button" class="term-btn active bg-brand-600 text-white py-1.5 text-xs font-semibold rounded-lg transition-colors" data-years="30">30 yrs</button>
+
+                            <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl space-y-2 text-xs">
+                                <div class="flex justify-between items-center text-slate-600 dark:text-slate-400">
+                                    <span>Estimated Transfer Duty:</span>
+                                    <span id="stampDutyAmount" class="font-bold text-slate-900 dark:text-white text-sm">$38,090</span>
+                                </div>
+                                <div class="flex justify-between items-center text-slate-600 dark:text-slate-400">
+                                    <span>Transfer Fee & Registration:</span>
+                                    <span id="govFeesAmount" class="font-medium">$350</span>
+                                </div>
+                                <div class="pt-2 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center font-bold text-slate-900 dark:text-white">
+                                    <span>Total Upfront Gov Fees:</span>
+                                    <span id="totalUpfrontFees" class="text-brand-600 dark:text-brand-400 text-sm">$38,440</span>
+                                </div>
                             </div>
                         </div>
-
-                        <!-- Repayment Frequency -->
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Repayment Frequency</label>
-                            <div class="grid grid-cols-3 gap-2">
-                                <button type="button" class="freq-btn text-xs font-semibold py-2.5 px-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-center" data-freq="weekly">
-                                    Weekly
-                                </button>
-                                <button type="button" class="freq-btn text-xs font-semibold py-2.5 px-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-center" data-freq="fortnightly">
-                                    Fortnightly
-                                </button>
-                                <button type="button" class="freq-btn active bg-brand-600 text-white font-bold text-xs py-2.5 px-3 rounded-xl shadow-sm transition-all text-center" data-freq="monthly">
-                                    Monthly
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Repayment Type Toggle -->
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Repayment Type</label>
-                            <div class="grid grid-cols-2 gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-                                <button type="button" id="typePI" class="type-btn text-xs font-bold py-2 rounded-lg bg-white dark:bg-navy-900 shadow-sm text-slate-900 dark:text-white transition-all">
-                                    Principal & Interest
-                                </button>
-                                <button type="button" id="typeIO" class="type-btn text-xs font-semibold py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all">
-                                    Interest Only
-                                </button>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-
-                <!-- NEW: Data Management Card (JSON Import & Export) -->
-                <div class="bg-white dark:bg-navy-900 rounded-2xl p-6 shadow-sm border border-slate-200/80 dark:border-slate-800">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-md font-bold flex items-center text-slate-900 dark:text-white">
-                            <i class="fa-solid fa-file-code text-brand-500 mr-2"></i> Data Management & Sharing
-                        </h2>
-                        <span class="text-xs font-semibold px-2 py-0.5 rounded bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300">JSON Storage</span>
-                    </div>
-
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
-                        Save your mortgage scenario to a JSON file to reload later, share with family/broker, or copy configuration.
-                    </p>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                        <!-- Export JSON File -->
-                        <button id="exportJsonBtn" class="w-full py-2.5 px-3 text-xs font-bold rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 transition-colors flex items-center justify-center space-x-2">
-                            <i class="fa-solid fa-download text-brand-500"></i>
-                            <span>Export Profile (JSON)</span>
-                        </button>
-
-                        <!-- Import JSON File -->
-                        <label class="w-full py-2.5 px-3 text-xs font-bold rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 transition-colors flex items-center justify-center space-x-2 cursor-pointer">
-                            <i class="fa-solid fa-upload text-indigo-400"></i>
-                            <span>Import Profile (JSON)</span>
-                            <input type="file" id="importJsonInput" accept=".json" class="hidden">
-                        </label>
-                    </div>
-
-                    <!-- Copy JSON to Clipboard -->
-                    <button id="copyConfigBtn" class="w-full mt-2.5 py-2 px-3 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400 transition-colors flex items-center justify-center space-x-2">
-                        <i class="fa-solid fa-copy text-slate-400"></i>
-                        <span>Copy Scenario to Clipboard</span>
-                    </button>
-                </div>
-
-                <!-- NSW Specifics Card (Stamp Duty / Transfer Duty) -->
-                <div class="bg-white dark:bg-navy-900 rounded-2xl p-6 shadow-sm border border-slate-200/80 dark:border-slate-800">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-md font-bold flex items-center text-slate-900 dark:text-white">
-                            <i class="fa-solid fa-map-location-dot text-indigo-500 mr-2"></i> NSW Transfer Duty Estimate
-                        </h2>
-                        <span class="text-xs font-semibold px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-300">Revenue NSW</span>
-                    </div>
-
-                    <div class="space-y-4">
-                        <!-- Buyer Type Toggle -->
-                        <div class="flex items-center justify-between text-xs sm:text-sm">
-                            <span class="text-slate-600 dark:text-slate-300 font-medium">First Home Buyer Scheme?</span>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="fhbToggle" class="sr-only peer">
-                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-brand-600"></div>
-                            </label>
-                        </div>
-
-                        <!-- Buyer Status -->
-                        <div class="grid grid-cols-2 gap-2 text-xs">
-                            <label class="flex items-center p-2 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800">
-                                <input type="radio" name="propertyType" value="existing" checked class="text-brand-600 focus:ring-brand-500">
-                                <span class="ml-2 font-medium text-slate-700 dark:text-slate-300">Established Home</span>
-                            </label>
-                            <label class="flex items-center p-2 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800">
-                                <input type="radio" name="propertyType" value="vacant" class="text-brand-600 focus:ring-brand-500">
-                                <span class="ml-2 font-medium text-slate-700 dark:text-slate-300">Vacant Land</span>
-                            </label>
-                        </div>
-
-                        <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl space-y-2 text-xs">
-                            <div class="flex justify-between items-center text-slate-600 dark:text-slate-400">
-                                <span>Estimated Transfer Duty:</span>
-                                <span id="stampDutyAmount" class="font-bold text-slate-900 dark:text-white text-sm">$38,090</span>
-                            </div>
-                            <div class="flex justify-between items-center text-slate-600 dark:text-slate-400">
-                                <span>Transfer Fee & Registration:</span>
-                                <span id="govFeesAmount" class="font-medium">$350</span>
-                            </div>
-                            <div class="pt-2 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center font-bold text-slate-900 dark:text-white">
-                                <span>Total Upfront Gov Fees:</span>
-                                <span id="totalUpfrontFees" class="text-brand-600 dark:text-brand-400 text-sm">$38,440</span>
-                            </div>
-                        </div>
-                        <p class="text-[11px] text-slate-400 dark:text-slate-500 leading-tight">
+                        <p class="mt-3 text-[11px] text-slate-400 dark:text-slate-500 leading-tight">
                             *Calculations based on standard Revenue NSW transfer duty rates & FHAB Assistance Scheme thresholds (exemption up to $800k, concessions to $1M for homes).
                         </p>
                     </div>
                 </div>
-
             </div>
+        </div>
+    </section>
 
-            <!-- RIGHT COLUMN: Calculation Results & Visuals -->
-            <div class="lg:col-span-7 space-y-6">
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-                <!-- Primary Result Display Card -->
+        <!-- Single column of re-orderable sections -->
+        <div id="sectionsContainer" class="space-y-6">
+
+            <!-- Scheduled Repayment & Payment Tracker -->
+            <section data-section-id="repayment" class="bg-white dark:bg-navy-900 rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 dark:border-slate-800">
+                <div class="flex items-start justify-between gap-3 mb-5">
+                    <div>
+                        <h3 class="font-bold text-slate-900 dark:text-white text-base">Scheduled Repayment</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Your repayment and how far along the loan you are</p>
+                    </div>
+                    <div data-section-controls></div>
+                </div>
+
+                <!-- Primary Result Display -->
                 <div class="bg-gradient-to-br from-slate-900 via-navy-900 to-slate-900 text-white rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden border border-slate-800">
                     <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -371,9 +359,132 @@
                     </div>
                 </div>
 
-                <!-- Offset Benefit Summary Card -->
-                <div id="offsetBenefitCard" class="bg-gradient-to-r from-emerald-950/60 via-teal-950/40 to-navy-900 border border-emerald-500/30 rounded-2xl p-6 shadow-sm">
-                    <div class="flex items-center justify-between mb-3">
+                <!-- Payment Tracker -->
+                <div class="mt-6">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                        <h4 class="text-sm font-bold text-slate-900 dark:text-white flex items-center">
+                            <i class="fa-solid fa-calendar-check text-brand-600 mr-2"></i> Payment Tracker
+                        </h4>
+                        <span id="trackerAsOf" class="text-xs text-slate-500 dark:text-slate-400">As of today</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label for="loanStartDateInput" class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Loan start (settlement) date</label>
+                            <input type="date" id="loanStartDateInput" class="w-full px-3 py-2 text-sm font-semibold text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="firstPaymentDateInput" class="text-xs font-semibold text-slate-600 dark:text-slate-400">First repayment date</label>
+                                <button id="firstPaymentAutoBtn" type="button" class="hidden text-[11px] font-semibold text-brand-600 dark:text-brand-400 hover:underline">Use automatic</button>
+                            </div>
+                            <input type="date" id="firstPaymentDateInput" class="w-full px-3 py-2 text-sm font-semibold text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            <p id="firstPaymentHint" class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Automatic: one repayment period after the start date</p>
+                        </div>
+                    </div>
+
+                    <div id="trackerEmpty" class="mt-4 p-4 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-center text-xs text-slate-500 dark:text-slate-400">
+                        <i class="fa-regular fa-calendar text-base mb-1 block text-slate-400"></i>
+                        Enter your loan start date to see payments made so far, your next payment and how much of the loan you've paid off.
+                    </div>
+
+                    <div id="trackerContent" class="hidden mt-4 space-y-5">
+                        <!-- Key tracker stats -->
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800">
+                                <span class="text-xs text-slate-500 dark:text-slate-400 block mb-1">Next payment</span>
+                                <span id="trackerNextDate" class="text-sm sm:text-base font-bold text-slate-900 dark:text-white block">—</span>
+                                <span id="trackerNextDetail" class="text-[11px] text-slate-500 dark:text-slate-400">—</span>
+                            </div>
+                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800">
+                                <span class="text-xs text-slate-500 dark:text-slate-400 block mb-1">Payments made</span>
+                                <span id="trackerPaymentsMade" class="text-sm sm:text-base font-bold text-slate-900 dark:text-white block">—</span>
+                                <span id="trackerPaymentsRemaining" class="text-[11px] text-slate-500 dark:text-slate-400">—</span>
+                            </div>
+                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800">
+                                <span class="text-xs text-slate-500 dark:text-slate-400 block mb-1">Current balance</span>
+                                <span id="trackerBalance" class="text-sm sm:text-base font-bold text-slate-900 dark:text-white block">—</span>
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400">Estimated, excl. fees</span>
+                            </div>
+                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800">
+                                <span class="text-xs text-slate-500 dark:text-slate-400 block mb-1">Projected payoff</span>
+                                <span id="trackerPayoffDate" class="text-sm sm:text-base font-bold text-slate-900 dark:text-white block">—</span>
+                                <span id="trackerPayoffDetail" class="text-[11px] text-slate-500 dark:text-slate-400">—</span>
+                            </div>
+                        </div>
+
+                        <!-- Progress bars -->
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between text-xs mb-1.5">
+                                    <span class="font-semibold text-slate-700 dark:text-slate-300">Loan repaid</span>
+                                    <span id="trackerRepaidLabel" class="font-bold text-brand-600 dark:text-brand-400">0%</span>
+                                </div>
+                                <div class="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                                    <div id="trackerRepaidBar" class="h-full bg-brand-500 rounded-full transition-all duration-500" style="width:0%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1.5">
+                                    <span class="font-semibold text-slate-700 dark:text-slate-300">Loan term elapsed</span>
+                                    <span id="trackerElapsedLabel" class="font-bold text-indigo-500 dark:text-indigo-400">0%</span>
+                                </div>
+                                <div class="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                                    <div id="trackerElapsedBar" class="h-full bg-indigo-500 rounded-full transition-all duration-500" style="width:0%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1.5">
+                                    <span class="font-semibold text-slate-700 dark:text-slate-300">Paid so far: principal vs interest</span>
+                                    <span id="trackerPaidTotal" class="font-bold text-slate-900 dark:text-white">$0</span>
+                                </div>
+                                <div class="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden flex">
+                                    <div id="trackerSplitPrincipalBar" class="h-full bg-brand-500 transition-all duration-500" style="width:0%"></div>
+                                    <div id="trackerSplitInterestBar" class="h-full bg-amber-500 transition-all duration-500" style="width:0%"></div>
+                                </div>
+                                <div class="flex flex-wrap justify-between gap-2 mt-1.5 text-[11px]">
+                                    <span class="text-slate-500 dark:text-slate-400"><span class="inline-block w-2 h-2 rounded-full bg-brand-500 mr-1"></span>Principal <span id="trackerPrincipalPaid" class="font-bold text-brand-600 dark:text-brand-400">$0</span></span>
+                                    <span class="text-slate-500 dark:text-slate-400"><span class="inline-block w-2 h-2 rounded-full bg-amber-500 mr-1"></span>Interest <span id="trackerInterestPaid" class="font-bold text-amber-600 dark:text-amber-400">$0</span></span>
+                                </div>
+                                <p id="trackerOffsetSaved" class="hidden mt-2 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium"></p>
+                            </div>
+                        </div>
+
+                        <!-- Recent & upcoming payments -->
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span id="trackerTableTitle" class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Recent & upcoming payments</span>
+                                <button id="trackerShowAllBtn" type="button" class="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:underline">Show all payments</button>
+                            </div>
+                            <div id="trackerTableWrap" class="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-800">
+                                <table class="w-full text-left text-xs">
+                                    <thead class="sticky top-0 bg-slate-50 dark:bg-slate-900">
+                                        <tr class="border-b border-slate-200 dark:border-slate-800 text-slate-400 uppercase font-semibold">
+                                            <th class="py-2.5 px-3">#</th>
+                                            <th class="py-2.5 px-3">Date</th>
+                                            <th class="py-2.5 px-3">Payment</th>
+                                            <th class="py-2.5 px-3">Principal</th>
+                                            <th class="py-2.5 px-3">Interest</th>
+                                            <th class="py-2.5 px-3 text-right">Balance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="trackerTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+                                        <!-- JS populated rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p class="mt-2 text-[11px] text-slate-400 dark:text-slate-500 leading-tight">
+                                Assumes the rate, repayment and offset balance stay as entered for the whole loan. Check your lender statement for actual figures.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Offset Account Impact -->
+            <section data-section-id="offset" id="offsetBenefitCard" class="bg-gradient-to-r from-emerald-950/60 via-teal-950/40 to-navy-900 border border-emerald-500/30 rounded-2xl p-4 sm:p-6 shadow-sm">
+                <div class="flex items-start justify-between gap-3 mb-4">
+                    <div class="flex flex-wrap items-center gap-2">
                         <h3 class="text-sm font-bold text-emerald-400 uppercase tracking-wider flex items-center">
                             <i class="fa-solid fa-piggy-bank mr-2 text-lg text-emerald-400"></i> Offset Account Impact
                         </h3>
@@ -381,26 +492,44 @@
                             Active ($50,000 Offset)
                         </span>
                     </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-                        <div class="bg-slate-900/70 p-3 rounded-xl border border-emerald-500/20">
-                            <span class="text-xs text-slate-400 block mb-1">Total Interest Saved</span>
-                            <span id="offsetInterestSaved" class="text-xl font-extrabold text-emerald-400">$128,450</span>
-                        </div>
-                        <div class="bg-slate-900/70 p-3 rounded-xl border border-emerald-500/20">
-                            <span class="text-xs text-slate-400 block mb-1">Time Saved Off Loan</span>
-                            <span id="offsetTimeSaved" class="text-xl font-extrabold text-brand-300">2 yrs 8 mos</span>
-                        </div>
-                        <div class="bg-slate-900/70 p-3 rounded-xl border border-emerald-500/20">
-                            <span class="text-xs text-slate-400 block mb-1">Adjusted Loan Duration</span>
-                            <span id="offsetNewTerm" class="text-xl font-extrabold text-white">27 yrs 4 mos</span>
-                        </div>
-                    </div>
+                    <div data-section-controls></div>
                 </div>
 
-                <!-- Interactive Chart Card -->
-                <div class="bg-white dark:bg-navy-900 rounded-2xl p-6 shadow-sm border border-slate-200/80 dark:border-slate-800">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6">
+                <!-- Offset Account Input -->
+                <div class="mb-5">
+                    <label for="offsetInput" class="text-sm font-semibold text-slate-200 flex items-center mb-1.5">
+                        Current Offset Account Balance
+                        <i class="fa-solid fa-circle-info ml-1.5 text-slate-400 text-xs" title="Money in an offset account reduces the loan balance on which interest is charged."></i>
+                    </label>
+                    <div class="relative rounded-xl shadow-sm sm:max-w-sm">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 font-semibold text-sm">$</span>
+                        <input type="number" id="offsetInput" value="50000" step="5000" min="0" class="w-full pl-8 pr-4 py-2.5 text-white text-base font-bold bg-slate-900/70 border border-emerald-500/30 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all">
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-1">
+                        Money in your offset account offsets interest daily, keeping payments fixed while reducing your loan duration.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-slate-900/70 p-3 rounded-xl border border-emerald-500/20">
+                        <span class="text-xs text-slate-400 block mb-1">Total Interest Saved</span>
+                        <span id="offsetInterestSaved" class="text-xl font-extrabold text-emerald-400">$128,450</span>
+                    </div>
+                    <div class="bg-slate-900/70 p-3 rounded-xl border border-emerald-500/20">
+                        <span class="text-xs text-slate-400 block mb-1">Time Saved Off Loan</span>
+                        <span id="offsetTimeSaved" class="text-xl font-extrabold text-brand-300">2 yrs 8 mos</span>
+                    </div>
+                    <div class="bg-slate-900/70 p-3 rounded-xl border border-emerald-500/20">
+                        <span class="text-xs text-slate-400 block mb-1">Adjusted Loan Duration</span>
+                        <span id="offsetNewTerm" class="text-xl font-extrabold text-white">27 yrs 4 mos</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Interactive Chart -->
+            <section data-section-id="chart" class="bg-white dark:bg-navy-900 rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 dark:border-slate-800">
+                <div class="flex items-start justify-between gap-3 mb-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 flex-1">
                         <div>
                             <h3 class="font-bold text-slate-900 dark:text-white text-base">Loan Balance & Amortization</h3>
                             <p class="text-xs text-slate-500 dark:text-slate-400">Visualizing loan payoff curve with and without offset savings</p>
@@ -410,58 +539,71 @@
                             <button id="viewChartSplit" class="px-3 py-1 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Payment Breakdown</button>
                         </div>
                     </div>
-
-                    <!-- Canvas Container -->
-                    <div class="relative h-64 sm:h-72 w-full">
-                        <canvas id="amortizationChart"></canvas>
-                    </div>
+                    <div data-section-controls></div>
                 </div>
 
-                <!-- Frequency Comparison Grid -->
+                <!-- Canvas Container -->
+                <div class="relative h-64 sm:h-72 w-full">
+                    <canvas id="amortizationChart"></canvas>
+                </div>
+            </section>
+
+            <!-- Frequency Comparison -->
+            <section data-section-id="frequency" class="bg-white dark:bg-navy-900 rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 dark:border-slate-800">
+                <div class="flex items-start justify-between gap-3 mb-4">
+                    <div>
+                        <h3 class="font-bold text-slate-900 dark:text-white text-base">Repayment Frequency Comparison</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">The same loan paid weekly, fortnightly or monthly</p>
+                    </div>
+                    <div data-section-controls></div>
+                </div>
+
                 <div class="grid grid-cols-3 gap-3 sm:gap-4">
-                    <div class="bg-white dark:bg-navy-900 p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-sm text-center">
+                    <div class="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 text-center">
                         <span class="text-xs text-slate-500 dark:text-slate-400 font-medium block mb-1">Weekly</span>
                         <span id="freqWeeklyVal" class="text-sm sm:text-base font-bold text-slate-900 dark:text-white">$1,067</span>
                         <span class="text-[10px] text-slate-400 block mt-0.5">52 payments/yr</span>
                     </div>
-                    <div class="bg-white dark:bg-navy-900 p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-sm text-center">
+                    <div class="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 text-center">
                         <span class="text-xs text-slate-500 dark:text-slate-400 font-medium block mb-1">Fortnightly</span>
                         <span id="freqFortnightlyVal" class="text-sm sm:text-base font-bold text-slate-900 dark:text-white">$2,135</span>
                         <span class="text-[10px] text-slate-400 block mt-0.5">26 payments/yr</span>
                     </div>
-                    <div class="bg-white dark:bg-navy-900 p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-sm text-center border-brand-500/50">
+                    <div class="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 text-center border-brand-500/50">
                         <span class="text-xs text-brand-600 dark:text-brand-400 font-bold block mb-1">Monthly</span>
                         <span id="freqMonthlyVal" class="text-sm sm:text-base font-bold text-slate-900 dark:text-white">$4,625</span>
                         <span class="text-[10px] text-slate-400 block mt-0.5">12 payments/yr</span>
                     </div>
                 </div>
+            </section>
 
-                <!-- Mini Breakdown Table / Schedule Preview -->
-                <div class="bg-white dark:bg-navy-900 rounded-2xl p-6 shadow-sm border border-slate-200/80 dark:border-slate-800">
-                    <div class="flex justify-between items-center mb-4">
+            <!-- Amortization Milestone Summary -->
+            <section data-section-id="milestones" class="bg-white dark:bg-navy-900 rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 dark:border-slate-800">
+                <div class="flex items-start justify-between gap-3 mb-4">
+                    <div>
                         <h3 class="font-bold text-slate-900 dark:text-white text-base">Amortization Milestone Summary</h3>
                         <span class="text-xs text-slate-500 dark:text-slate-400">Selected: <span id="scheduleTermLabel" class="font-semibold text-slate-800 dark:text-slate-200">30 Years</span></span>
                     </div>
-
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs">
-                            <thead>
-                                <tr class="border-b border-slate-200 dark:border-slate-800 text-slate-400 uppercase font-semibold">
-                                    <th class="py-2.5 px-2">Year</th>
-                                    <th class="py-2.5 px-2">Annual Payment</th>
-                                    <th class="py-2.5 px-2">Principal Paid</th>
-                                    <th class="py-2.5 px-2">Interest Paid</th>
-                                    <th class="py-2.5 px-2 text-right">Remaining Balance</th>
-                                </tr>
-                            </thead>
-                            <tbody id="amortizationTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
-                                <!-- JS populated rows -->
-                            </tbody>
-                        </table>
-                    </div>
+                    <div data-section-controls></div>
                 </div>
 
-            </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-200 dark:border-slate-800 text-slate-400 uppercase font-semibold">
+                                <th class="py-2.5 px-2">Year</th>
+                                <th class="py-2.5 px-2">Annual Payment</th>
+                                <th class="py-2.5 px-2">Principal Paid</th>
+                                <th class="py-2.5 px-2">Interest Paid</th>
+                                <th class="py-2.5 px-2 text-right">Remaining Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody id="amortizationTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+                            <!-- JS populated rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
 
         </div>
 
@@ -469,7 +611,7 @@
 
     <!-- Footer -->
     <footer class="mt-12 border-t border-slate-200 dark:border-slate-800 py-6 bg-white dark:bg-navy-900 text-center text-xs text-slate-500 dark:text-slate-400">
-        <div class="max-w-7xl mx-auto px-4">
+        <div class="max-w-5xl mx-auto px-4">
             <p>© 2026 NSW Mortgage Calculator. Created as an illustrative financial tool for New South Wales buyers.</p>
             <p class="mt-1 text-[11px] text-slate-400 dark:text-slate-500">Disclaimer: This tool provides estimations only and does not constitute financial advice. Rates, fees, and government duty calculations should be confirmed with a licensed broker or Revenue NSW.</p>
         </div>
@@ -479,6 +621,15 @@
     <script>
         const STORAGE_KEY = 'nsw_mortgage_calculator_state';
         const THEME_KEY = 'nsw_mortgage_theme_preference';
+
+        // Re-orderable sections, in default order
+        const SECTION_IDS = ['repayment', 'offset', 'chart', 'frequency', 'milestones'];
+
+        const FREQUENCIES = {
+            weekly: { perYear: 52, suffix: '/ week', title: 'Weekly Repayment', name: 'Weekly' },
+            fortnightly: { perYear: 26, suffix: '/ fortnight', title: 'Fortnightly Repayment', name: 'Fortnightly' },
+            monthly: { perYear: 12, suffix: '/ month', title: 'Monthly Repayment', name: 'Monthly' }
+        };
 
         // Default application state
         const defaultState = {
@@ -491,11 +642,16 @@
             repaymentType: 'PI', // PI or IO
             isFHB: false,
             propertyType: 'existing', // existing or vacant
-            chartMode: 'balance' // balance or split
+            chartMode: 'balance', // balance or split
+            loanStartDate: '', // YYYY-MM-DD
+            firstPaymentDate: '', // YYYY-MM-DD, blank = one period after start
+            sectionOrder: [...SECTION_IDS],
+            paramsCollapsed: false,
+            dutyExpanded: false
         };
 
         // Current reactive state
-        let state = { ...defaultState };
+        let state = { ...defaultState, sectionOrder: [...SECTION_IDS] };
 
         // DOM Element references
         const propertyPriceInput = document.getElementById('propertyPriceInput');
@@ -508,11 +664,13 @@
         const loanTermInput = document.getElementById('loanTermInput');
         const fhbToggle = document.getElementById('fhbToggle');
         const savedBadge = document.getElementById('savedBadge');
-        
+        const loanStartDateInput = document.getElementById('loanStartDateInput');
+        const firstPaymentDateInput = document.getElementById('firstPaymentDateInput');
+
         const repaymentAmount = document.getElementById('repaymentAmount');
         const repaymentFreqSuffix = document.getElementById('repaymentFreqSuffix');
         const freqLabelDisplay = document.getElementById('freqLabelDisplay');
-        
+
         const summaryPrincipal = document.getElementById('summaryPrincipal');
         const summaryInterest = document.getElementById('summaryInterest');
         const summaryTotalPaid = document.getElementById('summaryTotalPaid');
@@ -526,6 +684,7 @@
         const stampDutyAmount = document.getElementById('stampDutyAmount');
         const govFeesAmount = document.getElementById('govFeesAmount');
         const totalUpfrontFees = document.getElementById('totalUpfrontFees');
+        const dutyHeadlineAmount = document.getElementById('dutyHeadlineAmount');
 
         const freqWeeklyVal = document.getElementById('freqWeeklyVal');
         const freqFortnightlyVal = document.getElementById('freqFortnightlyVal');
@@ -534,14 +693,19 @@
         const amortizationTableBody = document.getElementById('amortizationTableBody');
         const scheduleTermLabel = document.getElementById('scheduleTermLabel');
 
+        const sectionsContainer = document.getElementById('sectionsContainer');
+
         let chartInstance = null;
         let saveBadgeTimeout = null;
         let toastTimeout = null;
+        let trackerShowAll = false;
+        let draggedSection = null;
 
         // Initialize Application
         document.addEventListener('DOMContentLoaded', () => {
             initDefaultTheme();
             loadStateFromStorage();
+            setupSectionControls();
             setupEventListeners();
             syncFormWithState();
             calculateAll();
@@ -571,11 +735,29 @@
                     localStorage.setItem(THEME_KEY, 'dark');
                     showToast('Switched to Dark Mode', 'fa-moon');
                 }
-                
+
                 if (chartInstance) {
                     calculateAll();
                 }
             });
+        }
+
+        // Merge a stored/imported state over the defaults and clean up layout values
+        function buildState(source) {
+            const merged = { ...defaultState, ...source };
+            merged.sectionOrder = normalizeSectionOrder(merged.sectionOrder);
+            if (!FREQUENCIES[merged.frequency]) merged.frequency = defaultState.frequency;
+            if (!isValidISODate(merged.loanStartDate)) merged.loanStartDate = '';
+            if (!isValidISODate(merged.firstPaymentDate)) merged.firstPaymentDate = '';
+            return merged;
+        }
+
+        // Keep only known section ids (no duplicates) and append any missing ones
+        function normalizeSectionOrder(order) {
+            const valid = Array.isArray(order)
+                ? order.filter((id, i) => SECTION_IDS.includes(id) && order.indexOf(id) === i)
+                : [];
+            return [...valid, ...SECTION_IDS.filter(id => !valid.includes(id))];
         }
 
         // Load state from localStorage
@@ -583,12 +765,11 @@
             try {
                 const stored = localStorage.getItem(STORAGE_KEY);
                 if (stored) {
-                    const parsed = JSON.parse(stored);
-                    state = { ...defaultState, ...parsed };
+                    state = buildState(JSON.parse(stored));
                 }
             } catch (e) {
                 console.error("Failed to load saved calculator session", e);
-                state = { ...defaultState };
+                state = buildState({});
             }
         }
 
@@ -635,7 +816,7 @@
 
         // Reset to initial default settings
         function resetToDefaults() {
-            state = { ...defaultState };
+            state = buildState({});
             try {
                 localStorage.removeItem(STORAGE_KEY);
             } catch (e) {}
@@ -649,13 +830,15 @@
             propertyPriceInput.value = state.propertyPrice;
             depositInput.value = state.deposit;
             offsetInput.value = state.offsetBalance;
-            
+
             const depositPct = state.propertyPrice > 0 ? ((state.deposit / state.propertyPrice) * 100).toFixed(1) : 0;
             depositPercentInput.value = parseFloat(depositPct);
 
             interestRateInput.value = state.interestRate;
             loanTermInput.value = state.loanTerm;
             fhbToggle.checked = state.isFHB;
+            loanStartDateInput.value = state.loanStartDate;
+            firstPaymentDateInput.value = state.firstPaymentDate;
 
             // Property type radio
             const propRadio = document.querySelector(`input[name="propertyType"][value="${state.propertyType}"]`);
@@ -678,6 +861,11 @@
 
             // Chart view buttons
             updateChartViewUI();
+
+            // Collapsible panels & section layout
+            updateParamsPanelUI();
+            updateDutyPanelUI();
+            applySectionOrder();
         }
 
         // Format Currency AUD
@@ -689,11 +877,53 @@
             }).format(amount);
         }
 
+        // Date helpers (local dates, stored as YYYY-MM-DD)
+        function isValidISODate(str) {
+            return typeof str === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(str) && !isNaN(parseISODate(str));
+        }
+
+        function parseISODate(str) {
+            const [y, m, d] = str.split('-').map(Number);
+            return new Date(y, m - 1, d);
+        }
+
+        function toISODate(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function formatDate(date) {
+            return date.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
+        // Add whole months, clamping to the end of shorter months (e.g. 31 Jan -> 28 Feb)
+        function addMonthsClamped(date, months) {
+            const y = date.getFullYear();
+            const m = date.getMonth() + months;
+            const lastDay = new Date(y, m + 1, 0).getDate();
+            return new Date(y, m, Math.min(date.getDate(), lastDay));
+        }
+
+        // Date of the repayment `periods` repayment periods after `date`
+        function addPeriods(date, periods, frequency) {
+            if (frequency === 'monthly') return addMonthsClamped(date, periods);
+            const days = frequency === 'weekly' ? 7 : 14;
+            return new Date(date.getFullYear(), date.getMonth(), date.getDate() + periods * days);
+        }
+
+        function getFirstPaymentDate() {
+            if (!state.loanStartDate) return null;
+            if (state.firstPaymentDate) return parseISODate(state.firstPaymentDate);
+            return addPeriods(parseISODate(state.loanStartDate), 1, state.frequency);
+        }
+
         // 2. Data Management: JSON Export, Import & Copy Config
         function exportStateToJson() {
             const dataToExport = {
                 app: "NSW Mortgage Calculator",
-                version: "2026.1",
+                version: "2026.2",
                 exportedAt: new Date().toISOString(),
                 state: state
             };
@@ -701,7 +931,7 @@
             const jsonStr = JSON.stringify(dataToExport, null, 2);
             const blob = new Blob([jsonStr], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
-            
+
             const today = new Date().toISOString().split('T')[0];
             const a = document.createElement('a');
             a.href = url;
@@ -729,7 +959,7 @@
                         typeof importedState.interestRate === 'number' &&
                         typeof importedState.loanTerm === 'number'
                     ) {
-                        state = { ...defaultState, ...importedState };
+                        state = buildState(importedState);
                         saveStateToStorage();
                         syncFormWithState();
                         calculateAll();
@@ -768,6 +998,144 @@
             showToast('Scenario copied to clipboard!', 'fa-copy');
         }
 
+        // 3. Section re-ordering (arrow buttons + drag and drop)
+        function setupSectionControls() {
+            sectionsContainer.querySelectorAll('[data-section-id]').forEach(section => {
+                const slot = section.querySelector('[data-section-controls]');
+                const btnClass = 'section-move-btn w-8 h-8 flex items-center justify-center rounded-lg text-xs text-slate-400 hover:text-brand-500 hover:bg-slate-500/15 transition-colors disabled:opacity-30 disabled:pointer-events-none';
+                slot.className = 'flex items-center gap-0.5 shrink-0';
+                slot.innerHTML = `
+                    <button type="button" class="${btnClass}" data-move="-1" title="Move section up" aria-label="Move section up"><i class="fa-solid fa-chevron-up"></i></button>
+                    <button type="button" class="${btnClass}" data-move="1" title="Move section down" aria-label="Move section down"><i class="fa-solid fa-chevron-down"></i></button>
+                    <span class="drag-handle hidden sm:flex w-8 h-8 items-center justify-center rounded-lg text-slate-400 hover:text-brand-500 hover:bg-slate-500/15 cursor-grab active:cursor-grabbing" title="Drag to reorder"><i class="fa-solid fa-grip-vertical"></i></span>
+                `;
+
+                slot.querySelectorAll('[data-move]').forEach(btn => {
+                    btn.addEventListener('click', () => moveSection(section.dataset.sectionId, parseInt(btn.dataset.move), btn));
+                });
+
+                // Only allow dragging when started from the handle, so text and inputs stay usable
+                const handle = slot.querySelector('.drag-handle');
+                handle.addEventListener('mousedown', () => section.setAttribute('draggable', 'true'));
+
+                section.addEventListener('dragstart', (e) => {
+                    draggedSection = section;
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', section.dataset.sectionId);
+                    requestAnimationFrame(() => section.classList.add('section-dragging'));
+                });
+
+                section.addEventListener('dragend', () => {
+                    section.classList.remove('section-dragging');
+                    section.removeAttribute('draggable');
+                    draggedSection = null;
+                    const newOrder = getDomSectionOrder();
+                    if (newOrder.join() !== state.sectionOrder.join()) {
+                        state.sectionOrder = newOrder;
+                        saveStateToStorage();
+                    }
+                    updateSectionControlsUI();
+                });
+            });
+
+            sectionsContainer.addEventListener('dragover', (e) => {
+                if (!draggedSection) return;
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                const target = e.target.closest('[data-section-id]');
+                if (!target || target === draggedSection) return;
+
+                const rect = target.getBoundingClientRect();
+                const insertBefore = e.clientY < rect.top + rect.height / 2;
+                const reference = insertBefore ? target : target.nextElementSibling;
+                if (reference !== draggedSection && reference !== draggedSection.nextElementSibling) {
+                    sectionsContainer.insertBefore(draggedSection, reference);
+                }
+            });
+
+            // A press on the handle that never became a drag must not leave the section draggable
+            document.addEventListener('mouseup', () => {
+                if (!draggedSection) {
+                    sectionsContainer.querySelectorAll('[draggable]').forEach(s => s.removeAttribute('draggable'));
+                }
+            });
+
+            sectionsContainer.addEventListener('drop', (e) => {
+                if (draggedSection) e.preventDefault();
+            });
+        }
+
+        function getDomSectionOrder() {
+            return [...sectionsContainer.querySelectorAll(':scope > [data-section-id]')].map(s => s.dataset.sectionId);
+        }
+
+        function applySectionOrder() {
+            state.sectionOrder.forEach(id => {
+                sectionsContainer.appendChild(sectionsContainer.querySelector(`:scope > [data-section-id="${id}"]`));
+            });
+            updateSectionControlsUI();
+        }
+
+        function updateSectionControlsUI() {
+            const sections = [...sectionsContainer.querySelectorAll(':scope > [data-section-id]')];
+            sections.forEach((section, i) => {
+                section.querySelector('[data-move="-1"]').disabled = i === 0;
+                section.querySelector('[data-move="1"]').disabled = i === sections.length - 1;
+            });
+        }
+
+        function moveSection(id, delta, sourceBtn) {
+            const order = [...state.sectionOrder];
+            const from = order.indexOf(id);
+            const to = from + delta;
+            if (from < 0 || to < 0 || to >= order.length) return;
+
+            [order[from], order[to]] = [order[to], order[from]];
+            state.sectionOrder = order;
+            applySectionOrder();
+            saveStateToStorage();
+
+            const section = sectionsContainer.querySelector(`[data-section-id="${id}"]`);
+            section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            // Keep focus on the arrow so the section can be moved repeatedly
+            if (sourceBtn && !sourceBtn.disabled) sourceBtn.focus();
+        }
+
+        // 4. Collapsible header panels
+        function updateParamsPanelUI() {
+            const collapsed = state.paramsCollapsed;
+            document.getElementById('paramsBody').classList.toggle('hidden', collapsed);
+            document.getElementById('paramsSummary').classList.toggle('hidden', !collapsed);
+            document.getElementById('paramsToggle').setAttribute('aria-expanded', String(!collapsed));
+            document.getElementById('paramsToggleLabel').textContent = collapsed ? 'Edit' : 'Collapse';
+            document.getElementById('paramsChevron').style.transform = collapsed ? 'rotate(180deg)' : '';
+        }
+
+        function updateDutyPanelUI() {
+            const expanded = state.dutyExpanded;
+            document.getElementById('dutyBody').classList.toggle('hidden', !expanded);
+            document.getElementById('dutyToggle').setAttribute('aria-expanded', String(expanded));
+            document.getElementById('dutyChevron').style.transform = expanded ? 'rotate(180deg)' : '';
+        }
+
+        function updateParamsSummary(loanAmount, activePayment, totalGovFees) {
+            const freq = FREQUENCIES[state.frequency];
+            const chips = [
+                ['fa-sack-dollar', `${formatAUD(loanAmount)} loan`],
+                ['fa-house', `${formatAUD(state.propertyPrice)} price`],
+                ['fa-percent', `${state.interestRate}% p.a.`],
+                ['fa-hourglass-half', `${state.loanTerm} yrs`],
+                ['fa-calendar', freq.name],
+                ['fa-scale-balanced', state.repaymentType === 'PI' ? 'P&I' : 'Interest only'],
+                ['fa-money-bill-wave', `${formatAUD(activePayment)} ${freq.suffix}`],
+                ['fa-map-location-dot', `${formatAUD(totalGovFees)} duty & fees`]
+            ];
+            document.getElementById('paramsSummary').innerHTML = chips.map(([icon, text]) => `
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    <i class="fa-solid ${icon} text-slate-400 text-[10px]"></i>${text}
+                </span>`).join('');
+        }
+
         // Setup UI Event Listeners
         function setupEventListeners() {
             // Reset button
@@ -783,6 +1151,21 @@
                     importStateFromJson(e.target.files[0]);
                     e.target.value = ''; // Reset input
                 }
+            });
+
+            // Collapsible parameters header & duty section
+            const toggleParams = () => {
+                state.paramsCollapsed = !state.paramsCollapsed;
+                updateParamsPanelUI();
+                saveStateToStorage();
+            };
+            document.getElementById('paramsToggle').addEventListener('click', toggleParams);
+            document.getElementById('paramsSummary').addEventListener('click', toggleParams);
+
+            document.getElementById('dutyToggle').addEventListener('click', () => {
+                state.dutyExpanded = !state.dutyExpanded;
+                updateDutyPanelUI();
+                saveStateToStorage();
             });
 
             // Property Price input
@@ -904,6 +1287,27 @@
                 });
             });
 
+            // Payment tracker dates
+            loanStartDateInput.addEventListener('change', (e) => {
+                state.loanStartDate = isValidISODate(e.target.value) ? e.target.value : '';
+                saveAndRecalculate();
+            });
+
+            firstPaymentDateInput.addEventListener('change', (e) => {
+                state.firstPaymentDate = isValidISODate(e.target.value) ? e.target.value : '';
+                saveAndRecalculate();
+            });
+
+            document.getElementById('firstPaymentAutoBtn').addEventListener('click', () => {
+                state.firstPaymentDate = '';
+                saveAndRecalculate();
+            });
+
+            document.getElementById('trackerShowAllBtn').addEventListener('click', () => {
+                trackerShowAll = !trackerShowAll;
+                calculateAll();
+            });
+
             // Chart view toggles
             document.getElementById('viewChartBalance').addEventListener('click', () => {
                 state.chartMode = 'balance';
@@ -1013,7 +1417,7 @@
         function calculateAll() {
             const loanAmount = Math.max(0, state.propertyPrice - state.deposit);
             const depositPct = state.propertyPrice > 0 ? ((state.deposit / state.propertyPrice) * 100).toFixed(1) : 0;
-            
+
             depositPctLabel.textContent = `(${depositPct}%)`;
             loanAmountDisplay.textContent = formatAUD(loanAmount);
 
@@ -1032,7 +1436,7 @@
                 } else {
                     const iMonthly = r / 12;
                     const nMonthly = years * 12;
-                    
+
                     if (iMonthly > 0) {
                         monthlyPayment = loanAmount * (iMonthly * Math.pow(1 + iMonthly, nMonthly)) / (Math.pow(1 + iMonthly, nMonthly) - 1);
                     } else {
@@ -1050,18 +1454,12 @@
             }
 
             let activePayment = monthlyPayment;
-            let freqSuffix = '/ month';
-            let freqTitle = 'Monthly Repayment';
-
             if (state.frequency === 'weekly') {
                 activePayment = weeklyPayment;
-                freqSuffix = '/ week';
-                freqTitle = 'Weekly Repayment';
             } else if (state.frequency === 'fortnightly') {
                 activePayment = fortnightlyPayment;
-                freqSuffix = '/ fortnight';
-                freqTitle = 'Fortnightly Repayment';
             }
+            const freq = FREQUENCIES[state.frequency];
 
             // Amortization Schedule Data Generation (with & without offset)
             const standardSchedule = generateAmortizationSchedule(loanAmount, r, years, state.repaymentType, 0);
@@ -1069,18 +1467,18 @@
 
             // Update Primary Display (Standard Scheduled Payment)
             repaymentAmount.textContent = formatAUD(activePayment);
-            repaymentFreqSuffix.textContent = freqSuffix;
-            freqLabelDisplay.textContent = freqTitle;
+            repaymentFreqSuffix.textContent = freq.suffix;
+            freqLabelDisplay.textContent = freq.title;
 
             summaryPrincipal.textContent = formatAUD(loanAmount);
             summaryInterest.textContent = formatAUD(offsetSchedule.totalInterest);
             summaryTotalPaid.textContent = formatAUD(loanAmount + offsetSchedule.totalInterest);
 
             // Update Offset Summary Card
-            offsetActiveBadge.textContent = state.offsetBalance > 0 
-                ? `Active (${formatAUD(state.offsetBalance)} Offset)` 
+            offsetActiveBadge.textContent = state.offsetBalance > 0
+                ? `Active (${formatAUD(state.offsetBalance)} Offset)`
                 : `Inactive ($0 Offset)`;
-                
+
             const interestSaved = Math.max(0, standardSchedule.totalInterest - offsetSchedule.totalInterest);
             const monthsSaved = Math.max(0, (years * 12) - offsetSchedule.payoffMonths);
 
@@ -1096,10 +1494,16 @@
             // NSW Stamp Duty calculations
             const stampDuty = calculateNSWStampDuty(state.propertyPrice, state.isFHB, state.propertyType);
             const govFee = 350;
-            
+
             stampDutyAmount.textContent = formatAUD(stampDuty);
             govFeesAmount.textContent = formatAUD(govFee);
             totalUpfrontFees.textContent = formatAUD(stampDuty + govFee);
+            dutyHeadlineAmount.textContent = formatAUD(stampDuty + govFee);
+
+            updateParamsSummary(loanAmount, activePayment, stampDuty + govFee);
+
+            // Payment tracker (uses the selected repayment frequency)
+            updatePaymentTracker(loanAmount, r, years);
 
             // Update Table
             updateAmortizationTable(offsetSchedule.yearlySummary);
@@ -1108,11 +1512,173 @@
             renderChart(standardSchedule, offsetSchedule);
         }
 
+        // Per-repayment schedule at the selected frequency (supports offset)
+        function generatePaymentSchedule(principal, annualRate, years, type, offset, perYear) {
+            const rate = annualRate / perYear;
+            const totalPeriods = Math.round(years * perYear);
+            const payment = rate > 0
+                ? principal * (rate * Math.pow(1 + rate, totalPeriods)) / (Math.pow(1 + rate, totalPeriods) - 1)
+                : principal / totalPeriods;
+
+            const rows = [];
+            let balance = principal;
+
+            for (let n = 1; n <= totalPeriods && balance > 0.005; n++) {
+                const interest = Math.max(0, balance - offset) * rate;
+                let principalPaid = type === 'IO' ? 0 : payment - interest;
+                if (principalPaid >= balance) principalPaid = balance;
+
+                balance = Math.max(0, balance - principalPaid);
+                rows.push({ n, interest, principal: principalPaid, payment: interest + principalPaid, balance });
+            }
+
+            return { rows, scheduledPeriods: totalPeriods };
+        }
+
+        // Payment tracker: payments made so far, next payment and overall progress
+        function updatePaymentTracker(loanAmount, annualRate, years) {
+            const firstPayment = getFirstPaymentDate();
+            const autoBtn = document.getElementById('firstPaymentAutoBtn');
+            const hint = document.getElementById('firstPaymentHint');
+
+            autoBtn.classList.toggle('hidden', !state.firstPaymentDate);
+            loanStartDateInput.value = state.loanStartDate;
+            firstPaymentDateInput.value = state.firstPaymentDate;
+            hint.textContent = state.firstPaymentDate
+                ? 'Custom first repayment date'
+                : firstPayment
+                    ? `Automatic: ${formatDate(firstPayment)} (one period after start)`
+                    : 'Automatic: one repayment period after the start date';
+
+            const hasTracker = !!firstPayment && loanAmount > 0;
+            document.getElementById('trackerEmpty').classList.toggle('hidden', hasTracker);
+            document.getElementById('trackerContent').classList.toggle('hidden', !hasTracker);
+            if (!hasTracker) return;
+
+            const perYear = FREQUENCIES[state.frequency].perYear;
+            const offsetPlan = generatePaymentSchedule(loanAmount, annualRate, years, state.repaymentType, state.offsetBalance, perYear);
+            const standardPlan = generatePaymentSchedule(loanAmount, annualRate, years, state.repaymentType, 0, perYear);
+            const rows = offsetPlan.rows;
+            // Count automatic dates from the start date so a 31st start stays on month-end (not stuck on the 28th)
+            const anchor = state.firstPaymentDate ? firstPayment : parseISODate(state.loanStartDate);
+            const shift = state.firstPaymentDate ? 0 : 1;
+            rows.forEach((row, i) => { row.date = addPeriods(anchor, i + shift, state.frequency); });
+
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            document.getElementById('trackerAsOf').textContent = `As of ${formatDate(today)}`;
+
+            // A payment due today counts as made
+            let made = rows.findIndex(row => row.date > today);
+            if (made === -1) made = rows.length;
+            const paidRows = rows.slice(0, made);
+            const nextRow = rows[made];
+
+            const principalPaid = paidRows.reduce((sum, row) => sum + row.principal, 0);
+            const interestPaid = paidRows.reduce((sum, row) => sum + row.interest, 0);
+            const totalPaid = principalPaid + interestPaid;
+            const balanceNow = made > 0 ? rows[made - 1].balance : loanAmount;
+            const standardInterestPaid = standardPlan.rows.slice(0, made).reduce((sum, row) => sum + row.interest, 0);
+            const lastRow = rows[rows.length - 1];
+
+            // Next payment
+            if (nextRow) {
+                const days = Math.round((nextRow.date - today) / 86400000);
+                document.getElementById('trackerNextDate').textContent = formatDate(nextRow.date);
+                document.getElementById('trackerNextDetail').textContent =
+                    `${formatAUD(nextRow.payment)} · ${days === 1 ? 'tomorrow' : `in ${days} days`}`;
+            } else {
+                document.getElementById('trackerNextDate').textContent = 'Paid off';
+                document.getElementById('trackerNextDetail').textContent = 'No payments remaining';
+            }
+
+            // Payments made / remaining
+            document.getElementById('trackerPaymentsMade').textContent = `${made} of ${rows.length}`;
+            document.getElementById('trackerPaymentsRemaining').textContent = rows.length < offsetPlan.scheduledPeriods
+                ? `${rows.length - made} left (${offsetPlan.scheduledPeriods} without offset)`
+                : `${rows.length - made} remaining`;
+
+            document.getElementById('trackerBalance').textContent = formatAUD(balanceNow);
+
+            // Projected payoff
+            document.getElementById('trackerPayoffDate').textContent = state.repaymentType === 'IO'
+                ? 'End of term'
+                : formatDate(lastRow.date);
+            document.getElementById('trackerPayoffDetail').textContent = state.repaymentType === 'IO'
+                ? `Balance due ${formatDate(lastRow.date)}`
+                : `Final payment ${formatAUD(lastRow.payment)}`;
+
+            // Progress bars
+            const repaidPct = loanAmount > 0 ? (principalPaid / loanAmount) * 100 : 0;
+            const elapsedPct = rows.length > 0 ? (made / rows.length) * 100 : 0;
+            document.getElementById('trackerRepaidLabel').textContent = `${repaidPct.toFixed(1)}% · ${formatAUD(principalPaid)} of ${formatAUD(loanAmount)}`;
+            document.getElementById('trackerRepaidBar').style.width = `${repaidPct}%`;
+            document.getElementById('trackerElapsedLabel').textContent = `${elapsedPct.toFixed(1)}% · ${made} of ${rows.length} payments`;
+            document.getElementById('trackerElapsedBar').style.width = `${elapsedPct}%`;
+
+            const principalShare = totalPaid > 0 ? (principalPaid / totalPaid) * 100 : 0;
+            const interestShare = totalPaid > 0 ? 100 - principalShare : 0;
+            document.getElementById('trackerPaidTotal').textContent = formatAUD(totalPaid);
+            document.getElementById('trackerSplitPrincipalBar').style.width = `${principalShare}%`;
+            document.getElementById('trackerSplitInterestBar').style.width = `${interestShare}%`;
+            document.getElementById('trackerPrincipalPaid').textContent = `${formatAUD(principalPaid)} (${principalShare.toFixed(0)}%)`;
+            document.getElementById('trackerInterestPaid').textContent = `${formatAUD(interestPaid)} (${interestShare.toFixed(0)}%)`;
+
+            const offsetSavedEl = document.getElementById('trackerOffsetSaved');
+            const savedSoFar = standardInterestPaid - interestPaid;
+            offsetSavedEl.classList.toggle('hidden', !(savedSoFar >= 1));
+            offsetSavedEl.innerHTML = `<i class="fa-solid fa-piggy-bank mr-1"></i> Your offset has saved about ${formatAUD(savedSoFar)} in interest so far.`;
+
+            renderTrackerTable(rows, made);
+        }
+
+        function renderTrackerTable(rows, made) {
+            const tbody = document.getElementById('trackerTableBody');
+            const wrap = document.getElementById('trackerTableWrap');
+            const showAllBtn = document.getElementById('trackerShowAllBtn');
+
+            const start = trackerShowAll ? 0 : Math.max(0, made - 3);
+            const end = trackerShowAll ? rows.length : Math.min(rows.length, made + 3);
+
+            showAllBtn.textContent = trackerShowAll ? 'Show recent only' : `Show all ${rows.length} payments`;
+            document.getElementById('trackerTableTitle').textContent = trackerShowAll ? 'Full payment schedule' : 'Recent & upcoming payments';
+            wrap.classList.toggle('max-h-96', trackerShowAll);
+            wrap.classList.toggle('overflow-y-auto', trackerShowAll);
+
+            const statusBadge = (i) => {
+                if (i < made) return '<span class="ml-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-brand-500/15 text-brand-600 dark:text-brand-400">Paid</span>';
+                if (i === made) return '<span class="ml-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-indigo-500/15 text-indigo-600 dark:text-indigo-400">Next</span>';
+                return '';
+            };
+
+            tbody.innerHTML = rows.slice(start, end).map((row, offsetIndex) => {
+                const i = start + offsetIndex;
+                const rowClass = i === made
+                    ? 'bg-indigo-50/70 dark:bg-indigo-500/10'
+                    : i < made ? 'text-slate-500 dark:text-slate-400' : '';
+                return `
+                    <tr class="${rowClass}" ${i === made ? 'data-next-row' : ''}>
+                        <td class="py-2 px-3 font-semibold">${row.n}</td>
+                        <td class="py-2 px-3 whitespace-nowrap">${formatDate(row.date)}${statusBadge(i)}</td>
+                        <td class="py-2 px-3">${formatAUD(row.payment)}</td>
+                        <td class="py-2 px-3 text-brand-600 dark:text-brand-400 font-medium">${formatAUD(row.principal)}</td>
+                        <td class="py-2 px-3 text-amber-600 dark:text-amber-400 font-medium">${formatAUD(row.interest)}</td>
+                        <td class="py-2 px-3 text-right font-semibold text-slate-900 dark:text-white">${formatAUD(row.balance)}</td>
+                    </tr>`;
+            }).join('');
+
+            // When showing the full schedule, scroll the next payment into view within the table
+            if (trackerShowAll) {
+                const nextRowEl = tbody.querySelector('[data-next-row]');
+                wrap.scrollTop = nextRowEl ? Math.max(0, nextRowEl.offsetTop - wrap.clientHeight / 2) : wrap.scrollHeight;
+            }
+        }
+
         // Generate Detailed Amortization Breakdown (supports offset)
         function generateAmortizationSchedule(principal, annualRate, years, type, offset) {
             const monthlyRate = annualRate / 12;
             const totalMonths = years * 12;
-            
+
             let balance = principal;
             let cumulativeInterest = 0;
             let cumulativePrincipal = 0;
@@ -1121,7 +1687,7 @@
             if (type === 'IO') {
                 monthlyPayment = principal * monthlyRate;
             } else {
-                monthlyPayment = monthlyRate > 0 
+                monthlyPayment = monthlyRate > 0
                     ? principal * (monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) / (Math.pow(1 + monthlyRate, totalMonths) - 1)
                     : principal / totalMonths;
             }
@@ -1223,7 +1789,7 @@
             amortizationTableBody.innerHTML = '';
 
             const milestoneYears = [1, 2, 3, 5, 10, 15, 20, 25, 30, 35, 40].filter(y => y <= state.loanTerm);
-            
+
             milestoneYears.forEach(y => {
                 const rowData = yearlySummary.find(item => item.year === y);
                 if (!rowData) return;

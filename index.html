@@ -625,6 +625,7 @@
                                 <span class="block text-[11px] text-slate-400">Each repayment is paid out of the offset account from your next repayment on, so the balance shrinks over time.</span>
                             </span>
                         </label>
+                        <p id="offsetAsOfNote" class="hidden mt-2 text-[11px] text-emerald-300"></p>
                         <p id="offsetDeductNote" class="hidden mt-2 text-[11px] font-medium text-amber-300"></p>
                     </div>
                 </div>
@@ -898,6 +899,7 @@
             ratesPurpose: 'OWNER_OCCUPIED', // lender rate comparison: OWNER_OCCUPIED or INVESTMENT
             currentBank: '', // lender name the borrower is with, highlighted in the rates table
             deductRepaymentsFromOffset: false, // repayments drawn from the offset account from the next repayment on
+            offsetBalanceAsOf: '', // YYYY-MM-DD the offset balance was last entered or updated
             sectionOrder: [...SECTION_IDS],
             paramsCollapsed: false,
             dutyExpanded: false
@@ -971,7 +973,12 @@
             loadStateFromStorage();
             bankRates = loadBankRatesCache();
             rateHistory = loadRateHistory();
+            applyDueOffsetDeductions(true);
             history.committed = historySnapshot();
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') checkOffsetDeductions();
+            });
+            setInterval(checkOffsetDeductions, 60 * 60 * 1000);
             setupSectionControls();
             setupEventListeners();
             syncFormWithState();
@@ -988,6 +995,7 @@
             if (!['OWNER_OCCUPIED', 'INVESTMENT'].includes(merged.ratesPurpose)) merged.ratesPurpose = defaultState.ratesPurpose;
             if (!LENDERS.some(l => l.name === merged.currentBank)) merged.currentBank = '';
             merged.deductRepaymentsFromOffset = merged.deductRepaymentsFromOffset === true;
+            if (!isValidISODate(merged.offsetBalanceAsOf)) merged.offsetBalanceAsOf = '';
             if (!isValidISODate(merged.loanStartDate)) merged.loanStartDate = '';
             if (!isValidISODate(merged.firstPaymentDate)) merged.firstPaymentDate = '';
             merged.extraRepayments = Array.isArray(merged.extraRepayments)
@@ -1577,6 +1585,8 @@
 
             document.getElementById('deductFromOffsetToggle').addEventListener('change', (e) => {
                 state.deductRepaymentsFromOffset = e.target.checked;
+                // The balance shown is treated as today's balance from the moment deductions start
+                if (state.deductRepaymentsFromOffset) state.offsetBalanceAsOf = toISODate(new Date());
                 saveAndRecalculate();
             });
 
@@ -1585,6 +1595,7 @@
                 let val = parseFloat(e.target.value);
                 if (isNaN(val) || val < 0) val = 0;
                 state.offsetBalance = val;
+                state.offsetBalanceAsOf = toISODate(new Date());
                 saveAndRecalculate();
             });
 
@@ -2563,9 +2574,68 @@
             return groups;
         }
 
+        // With "Deduct repayments from offset" on, take repayments that have fallen due since the balance was
+        // entered out of the stored balance. A repayment due today hasn't been taken yet (same as the tracker).
+        // Returns true when the balance changed.
+        function applyDueOffsetDeductions(notify) {
+            if (!state.deductRepaymentsFromOffset) return false;
+            const todayISO = toISODate(new Date());
+            const asOfISO = state.offsetBalanceAsOf;
+            if (asOfISO && asOfISO >= todayISO) return false;
+
+            let deducted = 0;
+            let count = 0;
+            const loanAmount = Math.max(0, state.propertyPrice - state.deposit);
+            const dateForPeriod = getPeriodDateFn();
+            // Older saves have no as-at date, so start counting from today rather than guessing
+            if (asOfISO && dateForPeriod && loanAmount > 0 && state.offsetBalance > 0) {
+                const perYear = FREQUENCIES[state.frequency].perYear;
+                const totalPeriods = Math.round(state.loanTerm * perYear);
+                const extras = groupExtrasByPeriod(state.extraRepayments, dateForPeriod, totalPeriods);
+                const plan = generatePaymentSchedule(loanAmount, state.interestRate / 100, state.loanTerm, state.repaymentType, state.offsetBalance, perYear, extras);
+                const asOf = parseISODate(asOfISO);
+                const today = parseISODate(todayISO);
+                plan.rows.forEach(row => {
+                    const due = dateForPeriod(row.n);
+                    if (due >= asOf && due < today) {
+                        deducted += row.payment;
+                        count++;
+                    }
+                });
+            }
+
+            const before = state.offsetBalance;
+            state.offsetBalance = Math.max(0, Math.round((before - deducted) * 100) / 100);
+            state.offsetBalanceAsOf = todayISO;
+
+            // Saved directly: an automatic update isn't an undo step
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            } catch (e) {}
+            if (history.pendingBase === null) history.committed = historySnapshot();
+
+            if (count && notify) {
+                showToast(`Offset updated: ${formatAUD(before - state.offsetBalance)} taken out for ${count} repayment${count === 1 ? '' : 's'}`, 'fa-piggy-bank');
+            }
+            return state.offsetBalance !== before;
+        }
+
+        // Re-check when the page is reopened or left open past a repayment date
+        function checkOffsetDeductions() {
+            if (applyDueOffsetDeductions(true)) {
+                offsetInput.value = state.offsetBalance;
+                calculateAll();
+            }
+        }
+
         // When repayments come out of the offset, say how many it covers and roughly when it runs out
         function updateOffsetDrawdownNote(loanAmount, annualRate, years) {
             const note = document.getElementById('offsetDeductNote');
+            const asOfNote = document.getElementById('offsetAsOfNote');
+            asOfNote.classList.toggle('hidden', !state.deductRepaymentsFromOffset || !state.offsetBalanceAsOf);
+            if (state.deductRepaymentsFromOffset && state.offsetBalanceAsOf) {
+                asOfNote.innerHTML = `<i class="fa-solid fa-rotate mr-1"></i>Balance as at ${formatDate(parseISODate(state.offsetBalanceAsOf))}. Each repayment is taken off it automatically once its date has passed.`;
+            }
             if (!state.deductRepaymentsFromOffset || state.offsetBalance <= 0 || loanAmount <= 0) {
                 note.classList.add('hidden');
                 return;

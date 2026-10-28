@@ -65,6 +65,15 @@
         .dark input[type=date]::-webkit-calendar-picker-indicator {
             filter: invert(0.8);
         }
+        /* Section just moved with the arrows */
+        [data-section-id] {
+            transition: outline-color 0.4s ease;
+            outline: 2px solid transparent;
+            outline-offset: 4px;
+        }
+        .section-moved {
+            outline-color: rgba(34, 197, 94, 0.6);
+        }
         /* Section being dragged */
         .section-dragging {
             opacity: 0.4;
@@ -249,6 +258,23 @@
                     </div>
                 </div>
 
+                <!-- Loan dates (drive the payment tracker) -->
+                <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+                    <div>
+                        <label for="loanStartDateInput" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Loan Start (Settlement) Date</label>
+                        <input type="date" id="loanStartDateInput" class="w-full px-3 py-2.5 text-sm font-bold text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Used by the payment tracker</p>
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label for="firstPaymentDateInput" class="text-sm font-semibold text-slate-700 dark:text-slate-300">First Repayment Date</label>
+                            <button id="firstPaymentAutoBtn" type="button" class="hidden text-[11px] font-semibold text-brand-600 dark:text-brand-400 hover:underline">Use automatic</button>
+                        </div>
+                        <input type="date" id="firstPaymentDateInput" class="w-full px-3 py-2.5 text-sm font-bold text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        <p id="firstPaymentHint" class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Automatic: one repayment period after the start date</p>
+                    </div>
+                </div>
+
                 <!-- Expandable NSW Transfer Duty Estimate -->
                 <div class="mt-3 rounded-xl border border-slate-200 dark:border-slate-800">
                     <button id="dutyToggle" type="button" aria-expanded="false" aria-controls="dutyBody" class="w-full flex items-center justify-between gap-3 px-4 py-3 text-left rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
@@ -386,27 +412,15 @@
                         <span id="trackerAsOf" class="text-xs text-slate-500 dark:text-slate-400">As of today</span>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label for="loanStartDateInput" class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Loan start (settlement) date</label>
-                            <input type="date" id="loanStartDateInput" class="w-full px-3 py-2 text-sm font-semibold text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                        </div>
-                        <div>
-                            <div class="flex items-center justify-between mb-1">
-                                <label for="firstPaymentDateInput" class="text-xs font-semibold text-slate-600 dark:text-slate-400">First repayment date</label>
-                                <button id="firstPaymentAutoBtn" type="button" class="hidden text-[11px] font-semibold text-brand-600 dark:text-brand-400 hover:underline">Use automatic</button>
-                            </div>
-                            <input type="date" id="firstPaymentDateInput" class="w-full px-3 py-2 text-sm font-semibold text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                            <p id="firstPaymentHint" class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Automatic: one repayment period after the start date</p>
-                        </div>
-                    </div>
-
-                    <div id="trackerEmpty" class="mt-4 p-4 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-center text-xs text-slate-500 dark:text-slate-400">
+                    <div id="trackerEmpty" class="p-4 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-center text-xs text-slate-500 dark:text-slate-400">
                         <i class="fa-regular fa-calendar text-base mb-1 block text-slate-400"></i>
-                        Enter your loan start date to see payments made so far, your next payment and how much of the loan you've paid off.
+                        Add your loan start date in Loan Parameters to see payments made so far, your next payment and how much of the loan you've paid off.
+                        <button id="trackerAddStartBtn" type="button" class="block mx-auto mt-2 px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold transition-colors">
+                            <i class="fa-solid fa-calendar-plus mr-1"></i> Add loan start date
+                        </button>
                     </div>
 
-                    <div id="trackerContent" class="hidden mt-4 space-y-5">
+                    <div id="trackerContent" class="hidden space-y-5">
                         <!-- Key tracker stats -->
                         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
                             <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800">
@@ -433,6 +447,8 @@
 
                         <!-- Progress bars -->
                         <div class="space-y-4">
+                            <!-- Loan repaid & term elapsed side by side (stacked on mobile) -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <div class="flex justify-between text-xs mb-1.5">
                                     <span class="font-semibold text-slate-700 dark:text-slate-300">Loan repaid</span>
@@ -441,6 +457,7 @@
                                 <div class="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                                     <div id="trackerRepaidBar" class="h-full bg-brand-500 rounded-full transition-all duration-500" style="width:0%"></div>
                                 </div>
+                                <span id="trackerRepaidDetail" class="block mt-1 text-[11px] text-slate-500 dark:text-slate-400"></span>
                             </div>
                             <div>
                                 <div class="flex justify-between text-xs mb-1.5">
@@ -450,6 +467,8 @@
                                 <div class="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                                     <div id="trackerElapsedBar" class="h-full bg-indigo-500 rounded-full transition-all duration-500" style="width:0%"></div>
                                 </div>
+                                <span id="trackerElapsedDetail" class="block mt-1 text-[11px] text-slate-500 dark:text-slate-400"></span>
+                            </div>
                             </div>
                             <div>
                                 <div class="flex justify-between text-xs mb-1.5">
@@ -657,6 +676,7 @@
                         Rates come from each lender's public Open Banking (Consumer Data Right) product data and are matched to your loan type, repayment type, LVR and loan size.
                     </p>
                     <p class="mt-1 text-[11px] text-slate-500 leading-tight">
+                        The <span class="text-slate-400 font-semibold">comparison rate</span> is the interest rate plus most fees and charges, so it's a better guide to a loan's true cost than the headline rate.
                         Loans with special eligibility (veterans, staff, green upgrades, construction, bridging) are left out, and first home buyer loans only show when First Home Buyer is ticked. Some customer-owned banks only lend to their members, and some rates need a package or a minimum balance, so check the lender's product page before relying on a rate. Click a rate to use it in the calculator.
                     </p>
                 </div>
@@ -756,7 +776,8 @@
     <!-- Logic JavaScript -->
     <script>
         const STORAGE_KEY = 'nsw_mortgage_calculator_state';
-        const RATES_CACHE_KEY = 'nsw_mortgage_bank_rates_cache_v1';
+        const RATES_CACHE_KEY = 'nsw_mortgage_bank_rates_cache_v2';
+        const RATE_HISTORY_KEY = 'nsw_mortgage_rate_history_v1';
 
         // Re-orderable sections, in default order
         const SECTION_IDS = ['repayment', 'offset', 'rates', 'chart', 'frequency', 'milestones'];
@@ -781,27 +802,27 @@
 
         // Lenders publishing home loan rates through Open Banking (Consumer Data Right) that allow browser access
         const LENDERS = [
-            { name: 'CommBank', base: 'https://api.commbank.com.au/public' },
-            { name: 'Westpac', base: 'https://digital-api.westpac.com.au' },
-            { name: 'NAB', base: 'https://openbank.api.nab.com.au' },
-            { name: 'ANZ', base: 'https://api.anz' },
-            { name: 'Macquarie', base: 'https://api.macquariebank.io' },
-            { name: 'ING', base: 'https://id.ob.ing.com.au' },
-            { name: 'ubank', base: 'https://public.cdr-api.86400.com.au' },
-            { name: 'Bankwest', base: 'https://open-api.bankwest.com.au/bwpublic' },
-            { name: 'St.George', base: 'https://digital-api.stgeorge.com.au' },
-            { name: 'BOQ', base: 'https://api.cds.boq.com.au' },
-            { name: 'Bendigo Bank', base: 'https://api.cdr.bendigobank.com.au' },
-            { name: 'Great Southern Bank', base: 'https://api.open-banking.greatsouthernbank.com.au' },
-            { name: 'Newcastle Permanent', base: 'https://openbank.newcastlepermanent.com.au' },
-            { name: 'Greater Bank', base: 'https://public.cdr.greater.com.au' },
-            { name: 'Teachers Mutual Bank', base: 'https://ob.tmbl.com.au/tmbank' },
-            { name: 'IMB Bank', base: 'https://openbank.openbanking.imb.com.au' },
-            { name: 'Police Bank', base: 'https://public.cdr.prd.policebank.com.au' },
-            { name: 'Beyond Bank', base: 'https://public.cdr.api.beyondbank.com.au' },
-            { name: 'Bank Australia', base: 'https://public.cdr.bankaust.com.au' },
-            { name: 'AMP Bank', base: 'https://api.cdr-api.amp.com.au' },
-            { name: 'ME Bank', base: 'https://api.cds.mebank.com.au' }
+            { name: 'CommBank', base: 'https://api.commbank.com.au/public', website: 'https://www.commbank.com.au', homeLoans: 'https://www.commbank.com.au/home-loans.html' },
+            { name: 'Westpac', base: 'https://digital-api.westpac.com.au', website: 'https://www.westpac.com.au', homeLoans: 'https://www.westpac.com.au/home-loans' },
+            { name: 'NAB', base: 'https://openbank.api.nab.com.au', website: 'https://www.nab.com.au', homeLoans: 'https://www.nab.com.au/personal/home-loans' },
+            { name: 'ANZ', base: 'https://api.anz', website: 'https://www.anz.com.au', homeLoans: 'https://www.anz.com.au/personal/home-loans/' },
+            { name: 'Macquarie', base: 'https://api.macquariebank.io', website: 'https://www.macquarie.com.au', homeLoans: 'https://www.macquarie.com.au/home-loans.html' },
+            { name: 'ING', base: 'https://id.ob.ing.com.au', website: 'https://www.ing.com.au', homeLoans: 'https://www.ing.com.au/home-loans.html' },
+            { name: 'ubank', base: 'https://public.cdr-api.86400.com.au', website: 'https://www.ubank.com.au', homeLoans: 'https://www.ubank.com.au/home-loans' },
+            { name: 'Bankwest', base: 'https://open-api.bankwest.com.au/bwpublic', website: 'https://www.bankwest.com.au', homeLoans: 'https://www.bankwest.com.au/home-loans' },
+            { name: 'St.George', base: 'https://digital-api.stgeorge.com.au', website: 'https://www.stgeorge.com.au', homeLoans: 'https://www.stgeorge.com.au/personal/home-loans' },
+            { name: 'BOQ', base: 'https://api.cds.boq.com.au', website: 'https://www.boq.com.au', homeLoans: 'https://www.boq.com.au/personal/home-loans/' },
+            { name: 'Bendigo Bank', base: 'https://api.cdr.bendigobank.com.au', website: 'https://www.bendigobank.com.au', homeLoans: 'https://www.bendigobank.com.au/personal/home-loans/' },
+            { name: 'Great Southern Bank', base: 'https://api.open-banking.greatsouthernbank.com.au', website: 'https://www.greatsouthernbank.com.au', homeLoans: 'https://www.greatsouthernbank.com.au/home-loans' },
+            { name: 'Newcastle Permanent', base: 'https://openbank.newcastlepermanent.com.au', website: 'https://www.newcastlepermanent.com.au', homeLoans: 'https://www.newcastlepermanent.com.au/personal/home-loans' },
+            { name: 'Greater Bank', base: 'https://public.cdr.greater.com.au', website: 'https://www.greater.com.au', homeLoans: 'https://www.greater.com.au/personal/loans/home-loans' },
+            { name: 'Teachers Mutual Bank', base: 'https://ob.tmbl.com.au/tmbank', website: 'https://www.tmbank.com.au', homeLoans: 'https://www.tmbank.com.au/home-loans' },
+            { name: 'IMB Bank', base: 'https://openbank.openbanking.imb.com.au', website: 'https://www.imb.com.au', homeLoans: 'https://www.imb.com.au/home-loans' },
+            { name: 'Police Bank', base: 'https://public.cdr.prd.policebank.com.au', website: 'https://www.policebank.com.au', homeLoans: 'https://www.policebank.com.au/home-loans/' },
+            { name: 'Beyond Bank', base: 'https://public.cdr.api.beyondbank.com.au', website: 'https://www.beyondbank.com.au', homeLoans: 'https://www.beyondbank.com.au/home-loans/' },
+            { name: 'Bank Australia', base: 'https://public.cdr.bankaust.com.au', website: 'https://www.bankaust.com.au', homeLoans: 'https://www.bankaust.com.au/banking/home-loans' },
+            { name: 'AMP Bank', base: 'https://api.cdr-api.amp.com.au', website: 'https://www.amp.com.au', homeLoans: 'https://www.amp.com.au/home-loans' },
+            { name: 'ME Bank', base: 'https://api.cds.mebank.com.au', website: 'https://www.mebank.com.au', homeLoans: 'https://www.mebank.com.au/home-loans/' }
         ];
         const CDR_HEADERS = { 'x-v': '9', 'x-min-v': '1' }; // accept whichever API version each lender supports
         const RATES_MAX_AGE_MS = 12 * 60 * 60 * 1000;
@@ -881,6 +902,7 @@
         let draggedSection = null;
         let bankRates = null; // { fetchedAt, lenders: [{ name, ok, error, rates: [...] }] }
         let bankRatesLoading = false;
+        let rateHistory = { since: null, rates: {} }; // { since, rates: { key: { rate, previous, changedAt } } }
 
         // Undo / redo history of state snapshots (view-only settings are left out)
         const HISTORY_IGNORED_KEYS = ['paramsCollapsed', 'dutyExpanded', 'chartMode', 'ratesPurpose'];
@@ -892,6 +914,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadStateFromStorage();
             bankRates = loadBankRatesCache();
+            rateHistory = loadRateHistory();
             history.committed = historySnapshot();
             setupSectionControls();
             setupEventListeners();
@@ -1110,13 +1133,17 @@
             });
         }
 
-        // Format Currency AUD
+        // Format Currency AUD with cents (repayments, interest, principal, offset)
+        const audCents = new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const audWhole = new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD', maximumFractionDigits: 0 });
+
         function formatAUD(amount) {
-            return new Intl.NumberFormat('en-AU', {
-                style: 'currency',
-                currency: 'AUD',
-                maximumFractionDigits: 0
-            }).format(amount);
+            return audCents.format(amount);
+        }
+
+        // Whole dollars for purchase figures (price, loan amount, duty and fees)
+        function formatAUDWhole(amount) {
+            return audWhole.format(amount);
         }
 
         // Date helpers (local dates, stored as YYYY-MM-DD)
@@ -1333,14 +1360,35 @@
             if (from < 0 || to < 0 || to >= order.length) return;
 
             [order[from], order[to]] = [order[to], order[from]];
+            const section = sectionsContainer.querySelector(`[data-section-id="${id}"]`);
+            const sections = [...sectionsContainer.querySelectorAll(':scope > [data-section-id]')];
+            const before = new Map(sections.map(s => [s, s.getBoundingClientRect().top]));
+
             state.sectionOrder = order;
             applySectionOrder();
             saveStateToStorage();
 
-            const section = sectionsContainer.querySelector(`[data-section-id="${id}"]`);
-            section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            // Keep the moved section where it was on screen so the arrows stay under the pointer
+            window.scrollBy(0, section.getBoundingClientRect().top - before.get(section));
+            animateSectionsFrom(sections, before);
+
+            section.classList.add('section-moved');
+            setTimeout(() => section.classList.remove('section-moved'), 700);
             // Keep focus on the arrow so the section can be moved repeatedly
             if (sourceBtn && !sourceBtn.disabled) sourceBtn.focus();
+        }
+
+        // Slide sections from their old screen positions to their new ones
+        function animateSectionsFrom(sections, before) {
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !Element.prototype.animate) return;
+            sections.forEach(s => {
+                const offset = before.get(s) - s.getBoundingClientRect().top;
+                if (Math.abs(offset) < 1) return;
+                s.animate(
+                    [{ transform: `translateY(${offset}px)` }, { transform: 'translateY(0)' }],
+                    { duration: 420, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }
+                );
+            });
         }
 
         // 4. Collapsible header panels
@@ -1363,15 +1411,16 @@
         function updateParamsSummary(loanAmount, activePayment, totalGovFees) {
             const freq = FREQUENCIES[state.frequency];
             const chips = [
-                ['fa-sack-dollar', `${formatAUD(loanAmount)} loan`],
-                ['fa-house', `${formatAUD(state.propertyPrice)} price`],
+                ['fa-sack-dollar', `${formatAUDWhole(loanAmount)} loan`],
+                ['fa-house', `${formatAUDWhole(state.propertyPrice)} price`],
                 ['fa-percent', `${state.interestRate}% p.a.`],
                 ['fa-hourglass-half', `${state.loanTerm} yrs`],
                 ['fa-calendar', freq.name],
                 ['fa-scale-balanced', state.repaymentType === 'PI' ? 'P&I' : 'Interest only'],
                 ['fa-money-bill-wave', `${formatAUD(activePayment)} ${freq.suffix}`],
-                ['fa-map-location-dot', `${formatAUD(totalGovFees)} duty & fees`]
+                ['fa-map-location-dot', `${formatAUDWhole(totalGovFees)} duty & fees`]
             ];
+            if (state.loanStartDate) chips.push(['fa-calendar-day', `Started ${formatDate(parseISODate(state.loanStartDate))}`]);
             document.getElementById('paramsSummary').innerHTML = chips.map(([icon, text]) => `
                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200">
                     <i class="fa-solid ${icon} text-slate-400 text-[10px]"></i>${text}
@@ -1578,6 +1627,17 @@
                 saveAndRecalculate();
             });
 
+            // Tracker empty state: open Loan Parameters and jump to the start date
+            document.getElementById('trackerAddStartBtn').addEventListener('click', () => {
+                if (state.paramsCollapsed) {
+                    state.paramsCollapsed = false;
+                    updateParamsPanelUI();
+                    saveStateToStorage();
+                }
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                loanStartDateInput.focus({ preventScroll: true });
+            });
+
             document.getElementById('firstPaymentAutoBtn').addEventListener('click', () => {
                 state.firstPaymentDate = '';
                 saveAndRecalculate();
@@ -1743,7 +1803,7 @@
             const depositPct = state.propertyPrice > 0 ? ((state.deposit / state.propertyPrice) * 100).toFixed(1) : 0;
 
             depositPctLabel.textContent = `(${depositPct}%)`;
-            loanAmountDisplay.textContent = formatAUD(loanAmount);
+            loanAmountDisplay.textContent = formatAUDWhole(loanAmount);
 
             const r = (state.interestRate / 100);
             const years = state.loanTerm;
@@ -1843,10 +1903,10 @@
             const stampDuty = calculateNSWStampDuty(state.propertyPrice, state.isFHB, state.propertyType);
             const govFee = 350;
 
-            stampDutyAmount.textContent = formatAUD(stampDuty);
-            govFeesAmount.textContent = formatAUD(govFee);
-            totalUpfrontFees.textContent = formatAUD(stampDuty + govFee);
-            dutyHeadlineAmount.textContent = formatAUD(stampDuty + govFee);
+            stampDutyAmount.textContent = formatAUDWhole(stampDuty);
+            govFeesAmount.textContent = formatAUDWhole(govFee);
+            totalUpfrontFees.textContent = formatAUDWhole(stampDuty + govFee);
+            dutyHeadlineAmount.textContent = formatAUDWhole(stampDuty + govFee);
 
             updateParamsSummary(loanAmount, activePayment, stampDuty + govFee);
 
@@ -2012,23 +2072,43 @@
             const comparison = parseFloat(lendingRate.comparisonRate);
 
             return {
+                // Identifies the same rate on later fetches, so rate changes can be tracked
+                id: hashString(JSON.stringify([lendingRate.lendingRateType, lendingRate.loanPurpose, lendingRate.repaymentType,
+                    lendingRate.additionalValue, tiers, lendingRate.additionalInfo])),
                 type: lendingRate.lendingRateType === 'FIXED' ? 'FIXED' : 'VARIABLE',
                 rate,
                 comparison: isFinite(comparison) ? comparison : null,
                 purpose: purpose === 'INVESTMENT' ? 'INVESTMENT' : 'OWNER_OCCUPIED',
                 interestOnly: repayment === 'INTEREST_ONLY',
                 fixedMonths: lendingRate.lendingRateType === 'FIXED' ? durationToMonths(lendingRate.additionalValue) : null,
-                lvr: lvrTier ? tierRange(lvrTier, true) : null,
+                // Some lenders only state the LVR band in the description, e.g. "LVR >60 - <80%"
+                lvr: lvrTier ? tierRange(lvrTier, true) : lvrFromText(lendingRate.additionalInfo),
                 balance: balanceTier ? tierRange(balanceTier, false) : null
             };
+        }
+
+        function lvrFromText(text) {
+            if (!text) return null;
+            const range = /LVR\s*(?:of\s*)?(?:>|&gt;|≥|over|above)?=?\s*(\d+(?:\.\d+)?)\s*%?\s*(?:-|–|to)\s*(?:<|&lt;|≤|under|below)?=?\s*(\d+(?:\.\d+)?)\s*%?/i.exec(text);
+            if (range) return [parseFloat(range[1]) / 100, parseFloat(range[2]) / 100];
+            const upTo = /LVR\s*(?:of\s*)?(?:up to|<|&lt;|≤|under|below|max(?:imum)?(?: of)?)\s*=?\s*(\d+(?:\.\d+)?)\s*%/i.exec(text);
+            if (upTo) return [0, parseFloat(upTo[1]) / 100];
+            return null;
+        }
+
+        function hashString(text) {
+            let hash = 5381;
+            for (let i = 0; i < text.length; i++) hash = ((hash << 5) + hash + text.charCodeAt(i)) | 0;
+            return (hash >>> 0).toString(36);
         }
 
         // Who can get a product: 'restricted' loans (veterans, staff, green upgrades, construction, bridging…)
         // are left out of the comparison; 'first-home' loans only count for first home buyers
         function productEligibility(product) {
             const name = product.name || '';
+            // EMPLOYMENT_STATUS is just the usual "must have an income" condition, so only STAFF counts here
             const types = (product.eligibility || []).map(e => e.eligibilityType);
-            if (types.includes('STAFF') || types.includes('EMPLOYMENT_STATUS')) return 'restricted';
+            if (types.includes('STAFF')) return 'restricted';
             if (/veteran|defen[cs]e force|essential worker|bridging|construction|sustainab|clean energy|green|reverse mortgage|equity release|line of credit|staff/i.test(name)) return 'restricted';
             if (/first home/i.test(name)) return 'first-home';
             return 'general';
@@ -2037,7 +2117,10 @@
         async function fetchLenderProducts(lender) {
             const listed = [];
             for (let page = 1; page <= 5; page++) {
-                const list = await fetchCdrJson(`${lender.base}/cds-au/v1/banking/products?product-category=RESIDENTIAL_MORTGAGES&page-size=100&page=${page}`);
+                const listUrl = `${lender.base}/cds-au/v1/banking/products?product-category=RESIDENTIAL_MORTGAGES&page-size=100&page=${page}`;
+                // One retry: some lender APIs occasionally drop the first request on a cold connection
+                const list = await fetchCdrJson(listUrl).catch(() =>
+                    new Promise(resolve => setTimeout(resolve, 1500)).then(() => fetchCdrJson(listUrl)));
                 listed.push(...((list.data && list.data.products) || []));
                 if (!list.meta || page >= (list.meta.totalPages || 1)) break;
             }
@@ -2053,9 +2136,20 @@
                     name: product.name,
                     url: safeUrl(product.applicationUri) || safeUrl(product.additionalInformation && product.additionalInformation.overviewUri),
                     eligibility: productEligibility(product),
-                    rates: (product.lendingRates || []).map(rate => parseLendingRate(rate, product)).filter(Boolean)
+                    rates: uniqueRateIds((product.lendingRates || []).map(rate => parseLendingRate(rate, product)).filter(Boolean))
                 }))
                 .filter(product => product.rates.length);
+        }
+
+        // Rates that look identical within a product get a numbered id so each keeps its own history
+        function uniqueRateIds(rates) {
+            const seen = new Map();
+            rates.forEach(rate => {
+                const count = (seen.get(rate.id) || 0) + 1;
+                seen.set(rate.id, count);
+                if (count > 1) rate.id = `${rate.id}-${count}`;
+            });
+            return rates;
         }
 
         async function loadBankRates() {
@@ -2083,9 +2177,11 @@
             updateProgress();
             renderBankRates();
 
+            const seenRateKeys = new Set();
             await Promise.all(LENDERS.map(async (lender, i) => {
                 try {
                     lenders[i] = { name: lender.name, ok: true, products: await fetchLenderProducts(lender) };
+                    recordRateHistory(lender.name, lenders[i].products, seenRateKeys);
                 } catch (e) {
                     lenders[i] = {
                         name: lender.name,
@@ -2101,11 +2197,55 @@
 
             bankRates.fetchedAt = Date.now();
             saveBankRatesCache();
+            pruneRateHistory(lenders, seenRateKeys);
             bankRatesLoading = false;
             refreshBtn.disabled = false;
             refreshBtn.querySelector('i').classList.remove('fa-spin');
             progress.classList.add('hidden');
             renderBankRates();
+        }
+
+        // Rate history: lenders don't publish past rates, so each rate seen is remembered in this browser
+        // and the last change (old rate and when it changed) is kept for the up/down arrows
+        function loadRateHistory() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(RATE_HISTORY_KEY));
+                if (saved && typeof saved.since === 'number' && saved.rates) return saved;
+            } catch (e) {}
+            return { since: null, rates: {} };
+        }
+
+        function rateHistoryKey(lenderName, productName, rate) {
+            return `${lenderName}|${productName}|${rate.id}`;
+        }
+
+        function recordRateHistory(lenderName, products, seenKeys) {
+            const now = Date.now();
+            if (!rateHistory.since) rateHistory.since = now;
+            products.forEach(product => product.rates.forEach(rate => {
+                const key = rateHistoryKey(lenderName, product.name, rate);
+                seenKeys.add(key);
+                const entry = rateHistory.rates[key];
+                if (!entry) {
+                    rateHistory.rates[key] = { rate: rate.rate, previous: null, changedAt: null };
+                } else if (Math.abs(entry.rate - rate.rate) > 1e-7) {
+                    rateHistory.rates[key] = { rate: rate.rate, previous: entry.rate, changedAt: now };
+                }
+            }));
+        }
+
+        // Forget rates a lender no longer offers (lenders that failed to load keep their history)
+        function pruneRateHistory(lenders, seenKeys) {
+            const loaded = new Set(lenders.filter(l => l.ok).map(l => `${l.name}|`));
+            Object.keys(rateHistory.rates).forEach(key => {
+                const lenderPrefix = `${key.split('|')[0]}|`;
+                if (loaded.has(lenderPrefix) && !seenKeys.has(key)) delete rateHistory.rates[key];
+            });
+            try {
+                localStorage.setItem(RATE_HISTORY_KEY, JSON.stringify(rateHistory));
+            } catch (e) {
+                console.warn('Could not save rate history', e);
+            }
         }
 
         // Repayment for the current loan at a given annual rate (%), using the selected frequency and type
@@ -2136,7 +2276,7 @@
             const currentPayment = repaymentAtRate(state.interestRate);
 
             document.getElementById('bankRatesScenario').textContent =
-                `${state.ratesPurpose === 'INVESTMENT' ? 'Investor' : 'Owner occupier'} · ${interestOnly ? 'Interest only' : 'Principal & interest'} · LVR ${(lvr * 100).toFixed(1)}% · ${formatAUD(loanAmount)} loan · your rate ${state.interestRate}%`;
+                `${state.ratesPurpose === 'INVESTMENT' ? 'Investor' : 'Owner occupier'} · ${interestOnly ? 'Interest only' : 'Principal & interest'} · LVR ${(lvr * 100).toFixed(1)}% · ${formatAUDWhole(loanAmount)} loan · your rate ${state.interestRate}%`;
 
             const tbody = document.getElementById('bankRatesTableBody');
             const headline = document.getElementById('bankRatesHeadline');
@@ -2165,19 +2305,47 @@
             const productLabel = (r) => r.url
                 ? `<a href="${escapeHtml(r.url)}" target="_blank" rel="noopener" class="hover:text-brand-400 hover:underline">${escapeHtml(r.product)}</a>`
                 : escapeHtml(r.product);
-            const rateButton = (r, extra) => `
-                <button type="button" data-use-rate="${pct(r.rate)}" data-rate-label="${escapeHtml(`${r.lender} ${r.product}`)}" title="Use this rate in the calculator"
-                    class="text-left group">
-                    <span class="text-sm font-extrabold text-white group-hover:text-brand-400">${pct(r.rate)}%</span>
-                    <span class="text-[10px] text-slate-400 ml-1">${extra}</span>
-                </button>
+
+            // Up (red) / down (green) arrow for the last change seen for this exact rate
+            const changeBadge = (r) => {
+                const entry = rateHistory.rates[rateHistoryKey(r.lender, r.product, r)];
+                if (!entry || entry.previous === null) {
+                    return `<span class="text-[10px] text-slate-600" title="No change seen since tracking started"><i class="fa-solid fa-minus"></i></span>`;
+                }
+                const diff = (entry.rate - entry.previous) * 100;
+                const up = diff > 0;
+                const when = formatDate(new Date(entry.changedAt));
+                return `
+                    <span class="inline-flex items-center gap-0.5 text-[10px] font-bold ${up ? 'text-rose-400' : 'text-brand-400'}"
+                        title="${up ? 'Up' : 'Down'} from ${pct(entry.previous)}% (change seen ${when})">
+                        <i class="fa-solid ${up ? 'fa-arrow-up' : 'fa-arrow-down'}"></i>${Math.abs(diff).toFixed(2)}
+                    </span>`;
+            };
+
+            const rateButton = (r, termLabel) => `
+                <div class="flex flex-wrap items-baseline gap-x-1.5">
+                    <button type="button" data-use-rate="${pct(r.rate)}" data-rate-label="${escapeHtml(`${r.lender} ${r.product}`)}" title="Use this rate in the calculator"
+                        class="text-sm font-extrabold text-white hover:text-brand-400">${pct(r.rate)}%</button>
+                    ${changeBadge(r)}
+                    ${termLabel ? `<span class="text-[10px] text-slate-400">${termLabel}</span>` : ''}
+                </div>
+                ${r.comparison ? `<span class="block text-[10px] text-slate-400" title="Comparison rate: the interest rate plus most fees and charges, so it's a better guide to the loan's true cost">Comparison rate ${pct(r.comparison)}%</span>` : ''}
                 <span class="block text-[10px] text-slate-500 truncate max-w-[14rem]">${productLabel(r)}</span>`;
             const fixedTerm = (months) => !months ? 'fixed' : months % 12 === 0 ? `${months / 12} yr fixed` : `${months} mth fixed`;
+            const lenderInfo = new Map(LENDERS.map(l => [l.name, l]));
+            const displayHost = (url) => new URL(url).hostname.replace(/^www\./, '');
 
             tbody.innerHTML = rows.map(({ lender, variable, fixed }) => {
                 let status = '';
                 if (lender.loading) status = '<span class="text-[10px] text-slate-500 ml-1"><i class="fa-solid fa-circle-notch fa-spin"></i></span>';
                 else if (!lender.ok) status = `<span class="block text-[10px] text-amber-400">${escapeHtml(lender.error || 'Unavailable')}${lender.products.length ? ' · earlier data' : ''}</span>`;
+
+                // Lender name links to its home loans page, with its main website underneath
+                const info = lenderInfo.get(lender.name);
+                const lenderCell = info
+                    ? `<a href="${info.homeLoans}" target="_blank" rel="noopener" class="font-semibold text-white hover:text-brand-400 hover:underline" title="${escapeHtml(lender.name)} home loans">${escapeHtml(lender.name)} <i class="fa-solid fa-arrow-up-right-from-square text-[9px] text-slate-500"></i></a>
+                       <a href="${info.website}" target="_blank" rel="noopener" class="block text-[10px] font-normal text-slate-500 hover:text-brand-400">${displayHost(info.website)}</a>`
+                    : `<span class="font-semibold text-white">${escapeHtml(lender.name)}</span>`;
 
                 const noMatch = `<span class="text-slate-500">${lender.loading && !lender.products.length ? 'Loading…' : '—'}</span>`;
                 let repaymentCell = '<span class="text-slate-500">—</span>';
@@ -2186,15 +2354,15 @@
                     const diff = payment - currentPayment;
                     repaymentCell = `
                         <span class="font-bold text-white">${formatAUD(payment)}</span><span class="text-[10px] text-slate-400"> ${freq.suffix}</span>
-                        <span class="block text-[10px] font-semibold ${Math.abs(diff) < 1 ? 'text-slate-500' : diff < 0 ? 'text-brand-400' : 'text-rose-400'}">
-                            ${Math.abs(diff) < 1 ? 'Same as yours' : `${diff < 0 ? '−' : '+'}${formatAUD(Math.abs(diff))} vs yours`}
+                        <span class="block text-[10px] font-semibold ${Math.abs(diff) < 0.005 ? 'text-slate-500' : diff < 0 ? 'text-brand-400' : 'text-rose-400'}">
+                            ${Math.abs(diff) < 0.005 ? 'Same as yours' : `${diff < 0 ? '−' : '+'}${formatAUD(Math.abs(diff))} vs yours`}
                         </span>`;
                 }
 
                 return `
                     <tr class="align-top">
-                        <td class="py-2.5 px-3 font-semibold text-white whitespace-nowrap">${escapeHtml(lender.name)}${status}</td>
-                        <td class="py-2.5 px-3">${variable ? rateButton(variable, variable.comparison ? `comp. ${pct(variable.comparison)}%` : '') : noMatch}</td>
+                        <td class="py-2.5 px-3 whitespace-nowrap">${lenderCell}${status}</td>
+                        <td class="py-2.5 px-3">${variable ? rateButton(variable, '') : noMatch}</td>
                         <td class="py-2.5 px-3">${fixed ? rateButton(fixed, fixedTerm(fixed.fixedMonths)) : noMatch}</td>
                         <td class="py-2.5 px-3 text-right whitespace-nowrap">${repaymentCell}</td>
                     </tr>`;
@@ -2208,15 +2376,17 @@
                 headline.innerHTML = `
                     <span class="text-slate-300">Lowest variable rate for your loan:</span>
                     <button type="button" data-use-rate="${pct(best.rate)}" data-rate-label="${escapeHtml(`${best.lender} ${best.product}`)}" class="font-extrabold text-brand-400 hover:underline">${pct(best.rate)}%</button>
+                    ${changeBadge(best)}
                     <span class="text-slate-300">at ${escapeHtml(best.lender)}</span>
                     <span class="text-slate-400">(${escapeHtml(best.product)})</span>
-                    ${diff < -1 ? `<span class="block sm:inline text-xs text-brand-400 font-semibold sm:ml-1">${formatAUD(Math.abs(diff))} ${freq.suffix} less than your ${state.interestRate}%</span>` : ''}`;
+                    ${diff < -0.005 ? `<span class="block sm:inline text-xs text-brand-400 font-semibold sm:ml-1">${formatAUD(Math.abs(diff))} ${freq.suffix} less than your ${state.interestRate}%</span>` : ''}`;
             }
 
             const okCount = bankRates.lenders.filter(l => l.ok).length;
+            const trackingSince = rateHistory.since ? ` since ${formatDate(new Date(rateHistory.since))}` : '';
             document.getElementById('bankRatesUpdated').textContent = bankRatesLoading
                 ? 'Fetching the latest rates from each lender…'
-                : `Updated ${timeAgo(bankRates.fetchedAt)} · ${okCount} of ${LENDERS.length} lenders responded. Rates come from each lender's public Open Banking (Consumer Data Right) product data, matched to your loan type, repayment type, LVR and loan size.`;
+                : `Updated ${timeAgo(bankRates.fetchedAt)} · ${okCount} of ${LENDERS.length} lenders responded. Rates come from each lender's public Open Banking (Consumer Data Right) product data, matched to your loan type, repayment type, LVR and loan size. Arrows show the last change to each rate seen in this browser (tracking${trackingSince}); a dash means no change seen yet.`;
         }
 
         // Group extra repayments by how many scheduled repayments fall on or before their date
@@ -2356,9 +2526,11 @@
             // Progress bars
             const repaidPct = loanAmount > 0 ? (principalPaid / loanAmount) * 100 : 0;
             const elapsedPct = rows.length > 0 ? (made / rows.length) * 100 : 0;
-            document.getElementById('trackerRepaidLabel').textContent = `${repaidPct.toFixed(1)}% · ${formatAUD(principalPaid)} of ${formatAUD(loanAmount)}`;
+            document.getElementById('trackerRepaidLabel').textContent = `${repaidPct.toFixed(1)}%`;
+            document.getElementById('trackerRepaidDetail').textContent = `${formatAUD(principalPaid)} of ${formatAUD(loanAmount)}`;
             document.getElementById('trackerRepaidBar').style.width = `${repaidPct}%`;
-            document.getElementById('trackerElapsedLabel').textContent = `${elapsedPct.toFixed(1)}% · ${made} of ${rows.length} payments`;
+            document.getElementById('trackerElapsedLabel').textContent = `${elapsedPct.toFixed(1)}%`;
+            document.getElementById('trackerElapsedDetail').textContent = `${made} of ${rows.length} payments`;
             document.getElementById('trackerElapsedBar').style.width = `${elapsedPct}%`;
 
             const principalShare = totalPaid > 0 ? (principalPaid / totalPaid) * 100 : 0;
@@ -2581,10 +2753,10 @@
 
                     yearlySummary.push({
                         year: yearNum,
-                        annualPayment: Math.round(yearInterest + yearPrincipal),
-                        principalPaid: Math.round(yearPrincipal),
-                        interestPaid: Math.round(yearInterest),
-                        balance: Math.round(balance)
+                        annualPayment: yearInterest + yearPrincipal,
+                        principalPaid: yearPrincipal,
+                        interestPaid: yearInterest,
+                        balance: balance
                     });
 
                     yearInterest = 0;
@@ -2716,7 +2888,7 @@
                                     let label = context.dataset.label || '';
                                     if (label) label += ': ';
                                     if (context.parsed.y !== null) {
-                                        label += formatAUD(context.parsed.y);
+                                        label += formatAUDWhole(context.parsed.y);
                                     }
                                     return label;
                                 }

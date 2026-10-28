@@ -467,11 +467,11 @@
 
                         <!-- Progress bars -->
                         <div class="space-y-4">
-                            <!-- Loan repaid & term elapsed side by side (stacked on mobile) -->
+                            <!-- 2x2 grid: principal paid, term elapsed, interest paid, total paid (stacked on mobile) -->
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <div class="flex justify-between text-xs mb-1.5">
-                                    <span class="font-semibold text-slate-700 dark:text-slate-300">Loan repaid</span>
+                                    <span class="font-semibold text-slate-700 dark:text-slate-300">Principal paid</span>
                                     <span id="trackerRepaidLabel" class="font-bold text-brand-600 dark:text-brand-400">0%</span>
                                 </div>
                                 <div class="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
@@ -489,10 +489,30 @@
                                 </div>
                                 <span id="trackerElapsedDetail" class="block mt-1 text-[11px] text-slate-500 dark:text-slate-400"></span>
                             </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1.5">
+                                    <span class="font-semibold text-slate-700 dark:text-slate-300">Interest paid</span>
+                                    <span id="trackerInterestLabel" class="font-bold text-amber-600 dark:text-amber-400">0%</span>
+                                </div>
+                                <div class="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                                    <div id="trackerInterestBar" class="h-full bg-amber-500 rounded-full transition-all duration-500" style="width:0%"></div>
+                                </div>
+                                <span id="trackerInterestDetail" class="block mt-1 text-[11px] text-slate-500 dark:text-slate-400"></span>
                             </div>
                             <div>
                                 <div class="flex justify-between text-xs mb-1.5">
-                                    <span class="font-semibold text-slate-700 dark:text-slate-300">Paid so far: principal vs interest</span>
+                                    <span class="font-semibold text-slate-700 dark:text-slate-300">Total Paid (Interest and Principal)</span>
+                                    <span id="trackerTotalLabel" class="font-bold text-sky-600 dark:text-sky-400">0%</span>
+                                </div>
+                                <div class="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                                    <div id="trackerTotalBar" class="h-full bg-sky-500 rounded-full transition-all duration-500" style="width:0%"></div>
+                                </div>
+                                <span id="trackerTotalDetail" class="block mt-1 text-[11px] text-slate-500 dark:text-slate-400"></span>
+                            </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1.5">
+                                    <span class="font-semibold text-slate-700 dark:text-slate-300">Principal vs Interest So Far</span>
                                     <span id="trackerPaidTotal" class="font-bold text-slate-900 dark:text-white">$0</span>
                                 </div>
                                 <div class="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden flex">
@@ -2729,6 +2749,20 @@
             document.getElementById('trackerElapsedLabel').textContent = `${elapsedPct.toFixed(1)}%`;
             document.getElementById('trackerElapsedDetail').textContent = `${made} of ${rows.length} payments`;
             document.getElementById('trackerElapsedBar').style.width = `${elapsedPct}%`;
+
+            // Interest and total paid so far, out of what's projected over the whole loan
+            const projectedInterest = rows.reduce((sum, row) => sum + row.interest, 0);
+            const projectedTotal = rows.reduce((sum, row) => sum + row.principal, 0)
+                + offsetPlan.appliedExtras.reduce((sum, extra) => sum + extra.applied, 0)
+                + projectedInterest;
+            const interestPct = projectedInterest > 0 ? Math.min(100, (interestPaid / projectedInterest) * 100) : 0;
+            const totalPct = projectedTotal > 0 ? Math.min(100, (totalPaid / projectedTotal) * 100) : 0;
+            document.getElementById('trackerInterestLabel').textContent = `${interestPct.toFixed(1)}%`;
+            document.getElementById('trackerInterestDetail').textContent = `${formatAUD(interestPaid)} of ${formatAUD(projectedInterest)} projected`;
+            document.getElementById('trackerInterestBar').style.width = `${interestPct}%`;
+            document.getElementById('trackerTotalLabel').textContent = `${totalPct.toFixed(1)}%`;
+            document.getElementById('trackerTotalDetail').textContent = `${formatAUD(totalPaid)} of ${formatAUD(projectedTotal)} projected`;
+            document.getElementById('trackerTotalBar').style.width = `${totalPct}%`;
 
             const principalShare = totalPaid > 0 ? (principalPaid / totalPaid) * 100 : 0;
             const interestShare = totalPaid > 0 ? 100 - principalShare : 0;

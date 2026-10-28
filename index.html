@@ -843,6 +843,7 @@
             firstPaymentDate: '', // YYYY-MM-DD, blank = one period after start
             extraRepayments: [], // [{ id, date: YYYY-MM-DD, amount }], negative amounts are corrections
             ratesPurpose: 'OWNER_OCCUPIED', // lender rate comparison: OWNER_OCCUPIED or INVESTMENT
+            currentBank: '', // lender name the borrower is with, highlighted in the rates table
             sectionOrder: [...SECTION_IDS],
             paramsCollapsed: false,
             dutyExpanded: false
@@ -930,6 +931,7 @@
             merged.sectionOrder = normalizeSectionOrder(merged.sectionOrder);
             if (!FREQUENCIES[merged.frequency]) merged.frequency = defaultState.frequency;
             if (!['OWNER_OCCUPIED', 'INVESTMENT'].includes(merged.ratesPurpose)) merged.ratesPurpose = defaultState.ratesPurpose;
+            if (!LENDERS.some(l => l.name === merged.currentBank)) merged.currentBank = '';
             if (!isValidISODate(merged.loanStartDate)) merged.loanStartDate = '';
             if (!isValidISODate(merged.firstPaymentDate)) merged.firstPaymentDate = '';
             merged.extraRepayments = Array.isArray(merged.extraRepayments)
@@ -1408,17 +1410,12 @@
             document.getElementById('dutyChevron').style.transform = expanded ? 'rotate(180deg)' : '';
         }
 
-        function updateParamsSummary(loanAmount, activePayment, totalGovFees) {
-            const freq = FREQUENCIES[state.frequency];
+        function updateParamsSummary(loanAmount) {
             const chips = [
                 ['fa-sack-dollar', `${formatAUDWhole(loanAmount)} loan`],
                 ['fa-house', `${formatAUDWhole(state.propertyPrice)} price`],
                 ['fa-percent', `${state.interestRate}% p.a.`],
-                ['fa-hourglass-half', `${state.loanTerm} yrs`],
-                ['fa-calendar', freq.name],
-                ['fa-scale-balanced', state.repaymentType === 'PI' ? 'P&I' : 'Interest only'],
-                ['fa-money-bill-wave', `${formatAUD(activePayment)} ${freq.suffix}`],
-                ['fa-map-location-dot', `${formatAUDWhole(totalGovFees)} duty & fees`]
+                ['fa-hourglass-half', `${state.loanTerm} yrs`]
             ];
             if (state.loanStartDate) chips.push(['fa-calendar-day', `Started ${formatDate(parseISODate(state.loanStartDate))}`]);
             document.getElementById('paramsSummary').innerHTML = chips.map(([icon, text]) => `
@@ -1608,6 +1605,16 @@
             document.getElementById('bankRatesRefreshBtn').addEventListener('click', () => loadBankRates());
 
             sectionsContainer.querySelector('[data-section-id="rates"]').addEventListener('click', (e) => {
+                // Current bank: pick a lender, or unselect the one already picked
+                const bankBtn = e.target.closest('[data-select-bank]');
+                if (bankBtn) {
+                    const name = bankBtn.dataset.selectBank;
+                    state.currentBank = state.currentBank === name ? '' : name;
+                    saveAndRecalculate();
+                    showToast(state.currentBank ? `${state.currentBank} set as your current bank` : 'Current bank unselected', 'fa-building-columns');
+                    return;
+                }
+
                 const btn = e.target.closest('[data-use-rate]');
                 if (!btn) return;
                 state.interestRate = parseFloat(btn.dataset.useRate);
@@ -1908,7 +1915,7 @@
             totalUpfrontFees.textContent = formatAUDWhole(stampDuty + govFee);
             dutyHeadlineAmount.textContent = formatAUDWhole(stampDuty + govFee);
 
-            updateParamsSummary(loanAmount, activePayment, stampDuty + govFee);
+            updateParamsSummary(loanAmount);
 
             // Payment tracker (uses the selected repayment frequency)
             updatePaymentTracker(loanAmount, r, years);
@@ -2347,6 +2354,17 @@
                        <a href="${info.website}" target="_blank" rel="noopener" class="block text-[10px] font-normal text-slate-500 hover:text-brand-400">${displayHost(info.website)}</a>`
                     : `<span class="font-semibold text-white">${escapeHtml(lender.name)}</span>`;
 
+                // "Current bank" appears on hover (always shown on touch-sized screens); the chosen row stays green
+                const isCurrent = lender.name === state.currentBank;
+                const bankControl = isCurrent
+                    ? `<span class="mt-1.5 flex flex-wrap items-center gap-1.5">
+                           <span class="inline-flex items-center gap-1 text-[10px] font-bold text-brand-400"><i class="fa-solid fa-circle-check"></i> Current bank</span>
+                           <button type="button" data-select-bank="${escapeHtml(lender.name)}" class="sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 transition-opacity text-[10px] font-semibold text-slate-300 hover:text-white border border-slate-600 hover:border-slate-400 rounded-md px-1.5 py-0.5">Unselect bank</button>
+                       </span>`
+                    : `<button type="button" data-select-bank="${escapeHtml(lender.name)}" class="mt-1.5 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 transition-opacity inline-flex items-center gap-1 text-[10px] font-semibold text-brand-400 border border-brand-500/40 hover:bg-brand-500/15 rounded-md px-1.5 py-0.5">
+                           <i class="fa-solid fa-building-columns"></i> Current bank
+                       </button>`;
+
                 const noMatch = `<span class="text-slate-500">${lender.loading && !lender.products.length ? 'Loading…' : '—'}</span>`;
                 let repaymentCell = '<span class="text-slate-500">—</span>';
                 if (variable) {
@@ -2360,8 +2378,8 @@
                 }
 
                 return `
-                    <tr class="align-top">
-                        <td class="py-2.5 px-3 whitespace-nowrap">${lenderCell}${status}</td>
+                    <tr class="group align-top transition-colors ${isCurrent ? 'bg-brand-500/15 shadow-[inset_3px_0_0_#22c55e]' : 'hover:bg-slate-800/40'}">
+                        <td class="py-2.5 px-3 whitespace-nowrap">${lenderCell}${status}${bankControl}</td>
                         <td class="py-2.5 px-3">${variable ? rateButton(variable, '') : noMatch}</td>
                         <td class="py-2.5 px-3">${fixed ? rateButton(fixed, fixedTerm(fixed.fixedMonths)) : noMatch}</td>
                         <td class="py-2.5 px-3 text-right whitespace-nowrap">${repaymentCell}</td>

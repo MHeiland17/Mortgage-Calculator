@@ -655,96 +655,6 @@
                 </div>
             </section>
 
-            <!-- Interest Rates & RBA -->
-            <section data-section-id="rates" class="bg-white dark:bg-navy-900 rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 dark:border-slate-800">
-                <div class="flex items-start justify-between gap-3 mb-5">
-                    <div>
-                        <h3 class="font-bold text-slate-900 dark:text-white text-base">Interest Rates & RBA</h3>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">Next cash rate decision and current lender home loan rates for your loan</p>
-                    </div>
-                    <div data-section-controls></div>
-                </div>
-
-                <!-- RBA cash rate & next decision -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div class="p-4 rounded-xl bg-slate-800/50 border border-slate-800">
-                        <span class="text-xs text-slate-400 block mb-1">RBA cash rate target</span>
-                        <span id="rbaCashRate" class="text-2xl font-extrabold text-white">—</span>
-                        <span id="rbaCashRateDetail" class="text-[11px] text-slate-400 block mt-0.5">—</span>
-                    </div>
-                    <div class="p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/30 sm:col-span-2">
-                        <span class="text-xs text-indigo-300 block mb-1">Next RBA rate decision</span>
-                        <div class="flex flex-wrap items-baseline gap-x-3">
-                            <span id="rbaNextDate" class="text-2xl font-extrabold text-white">—</span>
-                            <span id="rbaNextCountdown" class="text-sm font-bold text-indigo-300">—</span>
-                        </div>
-                        <span id="rbaNextDetail" class="text-[11px] text-slate-400 block mt-0.5">—</span>
-                        <div id="rbaUpcoming" class="flex flex-wrap gap-1.5 mt-3"></div>
-                    </div>
-                </div>
-                <p id="rbaStaleNote" class="hidden mt-2 text-[11px] font-medium text-amber-400"></p>
-                <p class="mt-2 text-[11px] text-slate-500">
-                    Decisions are announced at 2:30pm Sydney time on the second day of each Monetary Policy Board meeting.
-                    Source: <a href="https://www.rba.gov.au/schedules-events/board-meeting-schedules.html" target="_blank" rel="noopener" class="underline hover:text-brand-400">RBA meeting schedule</a> ·
-                    <a href="https://www.rba.gov.au/statistics/cash-rate/" target="_blank" rel="noopener" class="underline hover:text-brand-400">cash rate</a>
-                </p>
-
-                <!-- Lender home loan rates (Open Banking / Consumer Data Right) -->
-                <div class="mt-6">
-                    <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
-                        <div>
-                            <h4 class="text-sm font-bold text-white flex items-center">
-                                <i class="fa-solid fa-building-columns text-brand-500 mr-2"></i> Lender home loan rates
-                            </h4>
-                            <p id="bankRatesScenario" class="text-[11px] text-slate-400 mt-0.5">—</p>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <div class="grid grid-cols-2 gap-1 bg-slate-800 p-1 rounded-lg text-[11px] font-semibold">
-                                <button type="button" class="rates-purpose-btn px-2.5 py-1 rounded-md" data-purpose="OWNER_OCCUPIED">Owner occupier</button>
-                                <button type="button" class="rates-purpose-btn px-2.5 py-1 rounded-md" data-purpose="INVESTMENT">Investor</button>
-                            </div>
-                            <button id="bankRatesRefreshBtn" type="button" class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-700 text-slate-300 hover:text-brand-400 hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:pointer-events-none" title="Refresh lender rates" aria-label="Refresh lender rates">
-                                <i class="fa-solid fa-arrows-rotate"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div id="bankRatesHeadline" class="hidden mb-3 px-4 py-3 rounded-xl bg-brand-900/20 border border-brand-900/40 text-sm"></div>
-
-                    <div id="bankRatesProgress" class="hidden mb-3">
-                        <div class="flex justify-between text-[11px] text-slate-400 mb-1">
-                            <span id="bankRatesProgressLabel">Loading lender rates…</span>
-                        </div>
-                        <div class="h-1.5 rounded-full bg-slate-800 overflow-hidden">
-                            <div id="bankRatesProgressBar" class="h-full bg-brand-500 transition-all duration-300" style="width:0%"></div>
-                        </div>
-                    </div>
-
-                    <div class="overflow-x-auto rounded-xl border border-slate-800">
-                        <table class="w-full text-left text-xs">
-                            <thead class="bg-slate-900">
-                                <tr class="border-b border-slate-800 text-slate-400 uppercase font-semibold">
-                                    <th class="py-2.5 px-3">Lender</th>
-                                    <th class="py-2.5 px-3">Lowest variable</th>
-                                    <th class="py-2.5 px-3">Lowest fixed</th>
-                                    <th class="py-2.5 px-3 text-right">Repayment at variable</th>
-                                </tr>
-                            </thead>
-                            <tbody id="bankRatesTableBody" class="divide-y divide-slate-800 text-slate-300">
-                                <tr><td colspan="4" class="py-6 px-3 text-center text-slate-500">Lender rates load when this section comes into view.</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <p id="bankRatesUpdated" class="mt-2 text-[11px] text-slate-500 leading-tight">
-                        Rates come from each lender's public Open Banking (Consumer Data Right) product data and are matched to your loan type, repayment type, LVR and loan size.
-                    </p>
-                    <p class="mt-1 text-[11px] text-slate-500 leading-tight">
-                        The <span class="text-slate-400 font-semibold">comparison rate</span> is the interest rate plus most fees and charges, so it's a better guide to a loan's true cost than the headline rate.
-                        Loans with special eligibility (veterans, staff, green upgrades, construction, bridging) are left out, and first home buyer loans only show when First Home Buyer is ticked. Some customer-owned banks only lend to their members, and some rates need a package or a minimum balance, so check the lender's product page before relying on a rate. Click a rate to use it in the calculator.
-                    </p>
-                </div>
-            </section>
-
             <!-- Interactive Chart -->
             <section data-section-id="chart" class="bg-white dark:bg-navy-900 rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 dark:border-slate-800">
                 <div class="flex items-start justify-between gap-3 mb-6">
@@ -835,6 +745,96 @@
                 </div>
             </section>
 
+            <!-- Interest Rates & RBA -->
+            <section data-section-id="rates" class="bg-white dark:bg-navy-900 rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 dark:border-slate-800">
+                <div class="flex items-start justify-between gap-3 mb-5">
+                    <div>
+                        <h3 class="font-bold text-slate-900 dark:text-white text-base">Interest Rates & RBA</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Next cash rate decision and current lender home loan rates for your loan</p>
+                    </div>
+                    <div data-section-controls></div>
+                </div>
+
+                <!-- RBA cash rate & next decision -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="p-4 rounded-xl bg-slate-800/50 border border-slate-800">
+                        <span class="text-xs text-slate-400 block mb-1">RBA cash rate target</span>
+                        <span id="rbaCashRate" class="text-2xl font-extrabold text-white">—</span>
+                        <span id="rbaCashRateDetail" class="text-[11px] text-slate-400 block mt-0.5">—</span>
+                    </div>
+                    <div class="p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/30 sm:col-span-2">
+                        <span class="text-xs text-indigo-300 block mb-1">Next RBA rate decision</span>
+                        <div class="flex flex-wrap items-baseline gap-x-3">
+                            <span id="rbaNextDate" class="text-2xl font-extrabold text-white">—</span>
+                            <span id="rbaNextCountdown" class="text-sm font-bold text-indigo-300">—</span>
+                        </div>
+                        <span id="rbaNextDetail" class="text-[11px] text-slate-400 block mt-0.5">—</span>
+                        <div id="rbaUpcoming" class="flex flex-wrap gap-1.5 mt-3"></div>
+                    </div>
+                </div>
+                <p id="rbaStaleNote" class="hidden mt-2 text-[11px] font-medium text-amber-400"></p>
+                <p class="mt-2 text-[11px] text-slate-500">
+                    Decisions are announced at 2:30pm Sydney time on the second day of each Monetary Policy Board meeting.
+                    Source: <a href="https://www.rba.gov.au/schedules-events/board-meeting-schedules.html" target="_blank" rel="noopener" class="underline hover:text-brand-400">RBA meeting schedule</a> ·
+                    <a href="https://www.rba.gov.au/statistics/cash-rate/" target="_blank" rel="noopener" class="underline hover:text-brand-400">cash rate</a>
+                </p>
+
+                <!-- Lender home loan rates (Open Banking / Consumer Data Right) -->
+                <div class="mt-6">
+                    <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
+                        <div>
+                            <h4 class="text-sm font-bold text-white flex items-center">
+                                <i class="fa-solid fa-building-columns text-brand-500 mr-2"></i> Lender home loan rates
+                            </h4>
+                            <p id="bankRatesScenario" class="text-[11px] text-slate-400 mt-0.5">—</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="grid grid-cols-2 gap-1 bg-slate-800 p-1 rounded-lg text-[11px] font-semibold">
+                                <button type="button" class="rates-purpose-btn px-2.5 py-1 rounded-md" data-purpose="OWNER_OCCUPIED">Owner occupier</button>
+                                <button type="button" class="rates-purpose-btn px-2.5 py-1 rounded-md" data-purpose="INVESTMENT">Investor</button>
+                            </div>
+                            <button id="bankRatesRefreshBtn" type="button" class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-700 text-slate-300 hover:text-brand-400 hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:pointer-events-none" title="Refresh lender rates" aria-label="Refresh lender rates">
+                                <i class="fa-solid fa-arrows-rotate"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="bankRatesHeadline" class="hidden mb-3 px-4 py-3 rounded-xl bg-brand-900/20 border border-brand-900/40 text-sm"></div>
+
+                    <div id="bankRatesProgress" class="hidden mb-3">
+                        <div class="flex justify-between text-[11px] text-slate-400 mb-1">
+                            <span id="bankRatesProgressLabel">Loading lender rates…</span>
+                        </div>
+                        <div class="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                            <div id="bankRatesProgressBar" class="h-full bg-brand-500 transition-all duration-300" style="width:0%"></div>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-xl border border-slate-800">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-900">
+                                <tr class="border-b border-slate-800 text-slate-400 uppercase font-semibold">
+                                    <th class="py-2.5 px-3">Lender</th>
+                                    <th class="py-2.5 px-3">Lowest variable</th>
+                                    <th class="py-2.5 px-3">Lowest fixed</th>
+                                    <th class="py-2.5 px-3 text-right">Repayment at variable</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bankRatesTableBody" class="divide-y divide-slate-800 text-slate-300">
+                                <tr><td colspan="4" class="py-6 px-3 text-center text-slate-500">Lender rates load when this section comes into view.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p id="bankRatesUpdated" class="mt-2 text-[11px] text-slate-500 leading-tight">
+                        Rates come from each lender's public Open Banking (Consumer Data Right) product data and are matched to your loan type, repayment type, LVR and loan size.
+                    </p>
+                    <p class="mt-1 text-[11px] text-slate-500 leading-tight">
+                        The <span class="text-slate-400 font-semibold">comparison rate</span> is the interest rate plus most fees and charges, so it's a better guide to a loan's true cost than the headline rate.
+                        Loans with special eligibility (veterans, staff, green upgrades, construction, bridging) are left out, and first home buyer loans only show when First Home Buyer is ticked. Some customer-owned banks only lend to their members, and some rates need a package or a minimum balance, so check the lender's product page before relying on a rate. Click a rate to use it in the calculator.
+                    </p>
+                </div>
+            </section>
+
         </div>
 
     </main>
@@ -854,7 +854,7 @@
         const RATE_HISTORY_KEY = 'nsw_mortgage_rate_history_v1';
 
         // Re-orderable sections, in default order
-        const SECTION_IDS = ['repayment', 'tracker', 'offset', 'rates', 'chart', 'frequency', 'milestones'];
+        const SECTION_IDS = ['repayment', 'tracker', 'offset', 'chart', 'frequency', 'milestones', 'rates'];
 
         const FREQUENCIES = {
             weekly: { perYear: 52, suffix: '/ week', title: 'Weekly Repayment', name: 'Weekly' },
@@ -1012,8 +1012,18 @@
         });
 
         // Merge a stored/imported state over the defaults and clean up layout values
+        // Earlier default section orders; a saved order still matching one was never rearranged,
+        // so it moves to the current default (Bank Rates last) instead of being kept
+        const PAST_DEFAULT_SECTION_ORDERS = [
+            ['repayment', 'offset', 'rates', 'chart', 'frequency', 'milestones'],
+            ['repayment', 'tracker', 'offset', 'rates', 'chart', 'frequency', 'milestones']
+        ];
+
         function buildState(source) {
             const merged = { ...defaultState, ...source };
+            if (PAST_DEFAULT_SECTION_ORDERS.some(order => JSON.stringify(order) === JSON.stringify(merged.sectionOrder))) {
+                merged.sectionOrder = [...SECTION_IDS];
+            }
             merged.sectionOrder = normalizeSectionOrder(merged.sectionOrder);
             if (!FREQUENCIES[merged.frequency]) merged.frequency = defaultState.frequency;
             if (!['OWNER_OCCUPIED', 'INVESTMENT'].includes(merged.ratesPurpose)) merged.ratesPurpose = defaultState.ratesPurpose;

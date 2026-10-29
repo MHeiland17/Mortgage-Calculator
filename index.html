@@ -74,6 +74,10 @@
         /* iOS Safari sizes date fields to a fixed native width (ignoring width: 100%) and centres
            the text; drop the native look there so they fit the screen and line up with other fields */
         @supports (-webkit-touch-callout: none) {
+            /* iOS Safari zooms the page into any field with text under 16px when it's tapped */
+            input, select, textarea {
+                font-size: 16px !important;
+            }
             input[type=date] {
                 -webkit-appearance: none;
                 appearance: none;
@@ -1294,6 +1298,27 @@
             return (negative ? '-' : '') + digits + decimals;
         }
 
+        // Tapping or clicking into a text/number field selects its whole value, so typing replaces it.
+        // The click that focused the field would otherwise drop the caret in and clear the selection.
+        function setupSelectOnFocus() {
+            let justFocused = null;
+            const selectable = (el) => el instanceof HTMLInputElement && (el.type === 'text' || el.type === 'number');
+
+            document.addEventListener('focusin', (e) => {
+                if (!selectable(e.target)) return;
+                justFocused = e.target;
+                setTimeout(() => { try { e.target.select(); } catch (err) {} }, 0);
+            });
+            document.addEventListener('pointerup', (e) => {
+                if (e.target !== justFocused) return;
+                justFocused = null;
+                if (e.target.selectionStart === e.target.selectionEnd) {
+                    try { e.target.select(); } catch (err) {}
+                }
+            });
+            document.addEventListener('focusout', () => { justFocused = null; });
+        }
+
         function setupMoneyInputs() {
             const significant = (s) => s.replace(/[^0-9.\-]/g, '').length;
 
@@ -1764,6 +1789,7 @@
         // Setup UI Event Listeners
         function setupEventListeners() {
             setupMoneyInputs();
+            setupSelectOnFocus();
 
             // Reset button
             document.getElementById('resetDefaultsBtn').addEventListener('click', resetToDefaults);

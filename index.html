@@ -187,7 +187,7 @@
                         <label for="propertyPriceInput" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Property Purchase Price</label>
                         <div class="relative rounded-xl shadow-sm">
                             <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 font-semibold text-sm">$</span>
-                            <input type="number" id="propertyPriceInput" value="950000" step="5000" min="0" class="w-full pl-8 pr-4 py-2.5 text-slate-900 dark:text-white text-base font-bold bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all">
+                            <input type="text" inputmode="decimal" autocomplete="off" data-money data-step="5000" id="propertyPriceInput" value="950,000" class="w-full pl-8 pr-4 py-2.5 text-slate-900 dark:text-white text-base font-bold bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all">
                         </div>
                     </div>
 
@@ -200,7 +200,7 @@
                         <div class="grid grid-cols-5 gap-2">
                             <div class="relative rounded-xl shadow-sm col-span-3">
                                 <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 font-semibold text-sm">$</span>
-                                <input type="number" id="depositInput" value="190000" step="5000" min="0" class="w-full pl-8 pr-3 py-2.5 text-slate-900 dark:text-white text-sm font-bold bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all">
+                                <input type="text" inputmode="decimal" autocomplete="off" data-money data-step="5000" id="depositInput" value="190,000" class="w-full pl-8 pr-3 py-2.5 text-slate-900 dark:text-white text-sm font-bold bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all">
                             </div>
                             <div class="relative rounded-xl shadow-sm col-span-2">
                                 <input type="number" id="depositPercentInput" value="20" step="1" min="0" max="100" aria-label="Deposit percentage" class="w-full pr-8 pl-3 py-2.5 text-right text-slate-900 dark:text-white text-sm font-bold bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all">
@@ -361,12 +361,12 @@
         <!-- Single column of re-orderable sections -->
         <div id="sectionsContainer" class="space-y-6">
 
-            <!-- Scheduled Repayment & Payment Tracker -->
+            <!-- Scheduled Repayment -->
             <section data-section-id="repayment" class="bg-white dark:bg-navy-900 rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 dark:border-slate-800">
                 <div class="flex items-start justify-between gap-3 mb-5">
                     <div>
                         <h3 class="font-bold text-slate-900 dark:text-white text-base">Scheduled Repayment</h3>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">Your repayment and how far along the loan you are</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Your repayment and what the loan costs in total</p>
                     </div>
                     <div data-section-controls></div>
                 </div>
@@ -385,26 +385,21 @@
                     <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
                     <div class="relative z-10">
-                        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-6">
-                            <div>
-                                <span class="text-xs font-semibold text-brand-400 uppercase tracking-wider">Scheduled Repayment</span>
-                                <h3 id="freqLabelDisplay" class="text-slate-300 text-sm">Monthly Repayment</h3>
+                        <div class="flex flex-wrap justify-between items-center gap-3 mb-6">
+                            <div class="flex items-baseline space-x-2">
+                                <span id="repaymentAmount" class="text-4xl sm:text-5xl font-extrabold tracking-tight text-white">$4,625</span>
+                                <span id="repaymentFreqSuffix" class="text-slate-400 text-sm font-medium">/ month</span>
                             </div>
                             <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-brand-500/20 text-brand-300 border border-brand-500/30 w-max">
                                 <i class="fa-solid fa-calculator mr-1.5"></i> NSW Rate Estimate
                             </div>
                         </div>
 
-                        <div class="flex items-baseline space-x-2 mb-6">
-                            <span id="repaymentAmount" class="text-4xl sm:text-5xl font-extrabold tracking-tight text-white">$4,625</span>
-                            <span id="repaymentFreqSuffix" class="text-slate-400 text-sm font-medium">/ month</span>
-                        </div>
-
                         <!-- Secondary Metrics Bar -->
                         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-6 border-t border-slate-800">
                             <div>
                                 <span class="text-xs text-slate-400 block mb-1">Total Loan Principal</span>
-                                <span id="summaryPrincipal" class="text-base sm:text-lg font-bold text-slate-200">$760,000</span>
+                                <span id="summaryPrincipal" class="text-base sm:text-lg font-bold text-brand-500">$760,000</span>
                             </div>
                             <div>
                                 <span class="text-xs text-slate-400 block mb-1">Total Interest</span>
@@ -422,167 +417,169 @@
                         </div>
                     </div>
                 </div>
+            </section>
 
-                <!-- Payment Tracker -->
-                <div class="mt-6">
-                    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-                        <h4 class="text-sm font-bold text-slate-900 dark:text-white flex items-center">
-                            <i class="fa-solid fa-calendar-check text-brand-600 mr-2"></i> Payment Tracker
-                        </h4>
-                        <span id="trackerAsOf" class="text-xs text-slate-500 dark:text-slate-400">As of today</span>
+            <!-- Payment Tracker -->
+            <section data-section-id="tracker" class="bg-white dark:bg-navy-900 rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 dark:border-slate-800">
+                <div class="flex items-start justify-between gap-3 mb-5">
+                    <div>
+                        <h3 class="font-bold text-slate-900 dark:text-white text-base">Payment Tracker</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">How far along the loan you are · <span id="trackerAsOf">As of today</span></p>
+                    </div>
+                    <div data-section-controls></div>
+                </div>
+
+                <div id="trackerEmpty" class="p-4 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-center text-xs text-slate-500 dark:text-slate-400">
+                    <i class="fa-regular fa-calendar text-base mb-1 block text-slate-400"></i>
+                    Add your loan start date in Loan Parameters to see payments made so far, your next payment and how much of the loan you've paid off.
+                    <button id="trackerAddStartBtn" type="button" class="block mx-auto mt-2 px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold transition-colors">
+                        <i class="fa-solid fa-calendar-plus mr-1"></i> Add loan start date
+                    </button>
+                </div>
+
+                <div id="trackerContent" class="hidden space-y-5">
+                    <!-- Key tracker stats -->
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800">
+                            <span class="text-xs text-slate-500 dark:text-slate-400 block mb-1">Next payment</span>
+                            <span id="trackerNextDate" class="text-sm sm:text-base font-bold text-slate-900 dark:text-white block">—</span>
+                            <span id="trackerNextDetail" class="text-[11px] text-slate-500 dark:text-slate-400">—</span>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800">
+                            <span class="text-xs text-slate-500 dark:text-slate-400 block mb-1">Payments made</span>
+                            <span id="trackerPaymentsMade" class="text-sm sm:text-base font-bold text-slate-900 dark:text-white block">—</span>
+                            <span id="trackerPaymentsRemaining" class="text-[11px] text-slate-500 dark:text-slate-400">—</span>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800">
+                            <span class="text-xs text-slate-500 dark:text-slate-400 block mb-1">Current balance</span>
+                            <span id="trackerBalance" class="text-sm sm:text-base font-bold text-slate-900 dark:text-white block">—</span>
+                            <span class="text-[11px] text-slate-500 dark:text-slate-400">Estimated, excl. fees</span>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800">
+                            <span class="text-xs text-slate-500 dark:text-slate-400 block mb-1">Projected payoff</span>
+                            <span id="trackerPayoffDate" class="text-sm sm:text-base font-bold text-slate-900 dark:text-white block">—</span>
+                            <span id="trackerPayoffDetail" class="text-[11px] text-slate-500 dark:text-slate-400">—</span>
+                        </div>
                     </div>
 
-                    <div id="trackerEmpty" class="p-4 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-center text-xs text-slate-500 dark:text-slate-400">
-                        <i class="fa-regular fa-calendar text-base mb-1 block text-slate-400"></i>
-                        Add your loan start date in Loan Parameters to see payments made so far, your next payment and how much of the loan you've paid off.
-                        <button id="trackerAddStartBtn" type="button" class="block mx-auto mt-2 px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold transition-colors">
-                            <i class="fa-solid fa-calendar-plus mr-1"></i> Add loan start date
-                        </button>
-                    </div>
-
-                    <div id="trackerContent" class="hidden space-y-5">
-                        <!-- Key tracker stats -->
-                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800">
-                                <span class="text-xs text-slate-500 dark:text-slate-400 block mb-1">Next payment</span>
-                                <span id="trackerNextDate" class="text-sm sm:text-base font-bold text-slate-900 dark:text-white block">—</span>
-                                <span id="trackerNextDetail" class="text-[11px] text-slate-500 dark:text-slate-400">—</span>
-                            </div>
-                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800">
-                                <span class="text-xs text-slate-500 dark:text-slate-400 block mb-1">Payments made</span>
-                                <span id="trackerPaymentsMade" class="text-sm sm:text-base font-bold text-slate-900 dark:text-white block">—</span>
-                                <span id="trackerPaymentsRemaining" class="text-[11px] text-slate-500 dark:text-slate-400">—</span>
-                            </div>
-                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800">
-                                <span class="text-xs text-slate-500 dark:text-slate-400 block mb-1">Current balance</span>
-                                <span id="trackerBalance" class="text-sm sm:text-base font-bold text-slate-900 dark:text-white block">—</span>
-                                <span class="text-[11px] text-slate-500 dark:text-slate-400">Estimated, excl. fees</span>
-                            </div>
-                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800">
-                                <span class="text-xs text-slate-500 dark:text-slate-400 block mb-1">Projected payoff</span>
-                                <span id="trackerPayoffDate" class="text-sm sm:text-base font-bold text-slate-900 dark:text-white block">—</span>
-                                <span id="trackerPayoffDetail" class="text-[11px] text-slate-500 dark:text-slate-400">—</span>
-                            </div>
-                        </div>
-
-                        <!-- Progress bars -->
-                        <div class="space-y-4">
-                            <!-- 2x2 grid: principal paid, term elapsed, interest paid, total paid (stacked on mobile) -->
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <div class="flex justify-between text-xs mb-1.5">
-                                    <span class="font-semibold text-slate-700 dark:text-slate-300">Principal paid</span>
-                                    <span id="trackerRepaidLabel" class="font-bold text-brand-600 dark:text-brand-400">0%</span>
-                                </div>
-                                <div class="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                                    <div id="trackerRepaidBar" class="h-full bg-brand-500 rounded-full transition-all duration-500" style="width:0%"></div>
-                                </div>
-                                <span id="trackerRepaidDetail" class="block mt-1 text-[11px] text-slate-500 dark:text-slate-400"></span>
-                            </div>
-                            <div>
-                                <div class="flex justify-between text-xs mb-1.5">
-                                    <span class="font-semibold text-slate-700 dark:text-slate-300">Loan term elapsed</span>
-                                    <span id="trackerElapsedLabel" class="font-bold text-indigo-500 dark:text-indigo-400">0%</span>
-                                </div>
-                                <div class="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                                    <div id="trackerElapsedBar" class="h-full bg-indigo-500 rounded-full transition-all duration-500" style="width:0%"></div>
-                                </div>
-                                <span id="trackerElapsedDetail" class="block mt-1 text-[11px] text-slate-500 dark:text-slate-400"></span>
-                            </div>
-                            <div>
-                                <div class="flex justify-between text-xs mb-1.5">
-                                    <span class="font-semibold text-slate-700 dark:text-slate-300">Interest paid</span>
-                                    <span id="trackerInterestLabel" class="font-bold text-amber-600 dark:text-amber-400">0%</span>
-                                </div>
-                                <div class="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                                    <div id="trackerInterestBar" class="h-full bg-amber-500 rounded-full transition-all duration-500" style="width:0%"></div>
-                                </div>
-                                <span id="trackerInterestDetail" class="block mt-1 text-[11px] text-slate-500 dark:text-slate-400"></span>
-                            </div>
-                            <div>
-                                <div class="flex justify-between text-xs mb-1.5">
-                                    <span class="font-semibold text-slate-700 dark:text-slate-300">Total Paid (Interest and Principal)</span>
-                                    <span id="trackerTotalLabel" class="font-bold text-sky-600 dark:text-sky-400">0%</span>
-                                </div>
-                                <div class="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                                    <div id="trackerTotalBar" class="h-full bg-sky-500 rounded-full transition-all duration-500" style="width:0%"></div>
-                                </div>
-                                <span id="trackerTotalDetail" class="block mt-1 text-[11px] text-slate-500 dark:text-slate-400"></span>
-                            </div>
-                            </div>
-                            <div>
-                                <div class="flex justify-between text-xs mb-1.5">
-                                    <span class="font-semibold text-slate-700 dark:text-slate-300">Principal vs Interest So Far</span>
-                                    <span id="trackerPaidTotal" class="font-bold text-slate-900 dark:text-white">$0</span>
-                                </div>
-                                <div class="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden flex">
-                                    <div id="trackerSplitPrincipalBar" class="h-full bg-brand-500 transition-all duration-500" style="width:0%"></div>
-                                    <div id="trackerSplitInterestBar" class="h-full bg-amber-500 transition-all duration-500" style="width:0%"></div>
-                                </div>
-                                <div class="flex flex-wrap justify-between gap-2 mt-1.5 text-[11px]">
-                                    <span class="text-slate-500 dark:text-slate-400"><span class="inline-block w-2 h-2 rounded-full bg-brand-500 mr-1"></span>Principal incl. extras <span id="trackerPrincipalPaid" class="font-bold text-brand-600 dark:text-brand-400">$0</span></span>
-                                    <span class="text-slate-500 dark:text-slate-400"><span class="inline-block w-2 h-2 rounded-full bg-amber-500 mr-1"></span>Interest <span id="trackerInterestPaid" class="font-bold text-amber-600 dark:text-amber-400">$0</span></span>
-                                </div>
-                                <p id="trackerOffsetSaved" class="hidden mt-2 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium"></p>
-                            </div>
-                        </div>
-
-                        <!-- Extra repayments -->
-                        <div class="p-4 rounded-xl border border-sky-500/30 bg-sky-50/60 dark:bg-sky-500/5">
-                            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-                                <span class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center">
-                                    <i class="fa-solid fa-circle-plus text-sky-500 mr-2"></i> Extra repayments
-                                </span>
-                                <span class="text-[11px] text-slate-500 dark:text-slate-400">Use a negative amount to correct an earlier entry</span>
-                            </div>
-
-                            <form id="extraRepaymentForm" class="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2 items-end" novalidate>
-                                <div>
-                                    <label for="extraAmountInput" class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Amount</label>
-                                    <div class="relative">
-                                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-semibold text-sm">$</span>
-                                        <input type="number" id="extraAmountInput" step="any" placeholder="e.g. 5000 or -500" data-native-undo class="w-full pl-7 pr-3 py-2 text-sm font-semibold text-slate-900 dark:text-white bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none">
-                                    </div>
-                                </div>
-                                <div>
-                                    <label for="extraDateInput" class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Date paid</label>
-                                    <input type="date" id="extraDateInput" data-native-undo class="w-full px-3 py-2 text-sm font-semibold text-slate-900 dark:text-white bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none">
-                                </div>
-                                <button type="submit" class="px-4 py-2 text-sm font-bold rounded-xl bg-sky-600 hover:bg-sky-500 text-white transition-colors flex items-center justify-center gap-2">
-                                    <i class="fa-solid fa-plus"></i> Add
-                                </button>
-                            </form>
-
-                            <ul id="extraRepaymentList" class="mt-3 divide-y divide-slate-200/80 dark:divide-slate-800 text-xs"></ul>
-                        </div>
-
-                        <!-- Recent & upcoming payments -->
+                    <!-- Progress bars -->
+                    <div class="space-y-4">
+                        <!-- 2x2 grid: total paid and term elapsed (neutral), then principal and interest paid
+                             in the same left/right order as the split bar below (stacked on mobile) -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <div class="flex items-center justify-between mb-2">
-                                <span id="trackerTableTitle" class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Recent & upcoming payments</span>
-                                <button id="trackerShowAllBtn" type="button" class="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:underline">Show all payments</button>
+                            <div class="flex justify-between text-xs mb-1.5">
+                                <span class="font-semibold text-slate-700 dark:text-slate-300">Total Paid (Interest and Principal)</span>
+                                <span id="trackerTotalLabel" class="font-bold text-slate-900 dark:text-white">0%</span>
                             </div>
-                            <div id="trackerTableWrap" class="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-800">
-                                <table class="w-full text-left text-xs">
-                                    <thead class="sticky top-0 bg-slate-50 dark:bg-slate-900">
-                                        <tr class="border-b border-slate-200 dark:border-slate-800 text-slate-400 uppercase font-semibold">
-                                            <th class="py-2.5 px-3">#</th>
-                                            <th class="py-2.5 px-3">Date</th>
-                                            <th class="py-2.5 px-3">Payment</th>
-                                            <th class="py-2.5 px-3">Principal</th>
-                                            <th class="py-2.5 px-3">Interest</th>
-                                            <th class="py-2.5 px-3 text-right">Balance</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="trackerTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
-                                        <!-- JS populated rows -->
-                                    </tbody>
-                                </table>
+                            <div class="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                                <div id="trackerTotalBar" class="h-full bg-slate-400 rounded-full transition-all duration-500" style="width:0%"></div>
                             </div>
-                            <p class="mt-2 text-[11px] text-slate-400 dark:text-slate-500 leading-tight">
-                                Assumes the rate, repayment and offset balance stay as entered for the whole loan. Check your lender statement for actual figures.
-                            </p>
+                            <span id="trackerTotalDetail" class="block mt-1 text-[11px] text-slate-500 dark:text-slate-400"></span>
                         </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1.5">
+                                <span class="font-semibold text-slate-700 dark:text-slate-300">Loan term elapsed</span>
+                                <span id="trackerElapsedLabel" class="font-bold text-slate-900 dark:text-white">0%</span>
+                            </div>
+                            <div class="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                                <div id="trackerElapsedBar" class="h-full bg-slate-400 rounded-full transition-all duration-500" style="width:0%"></div>
+                            </div>
+                            <span id="trackerElapsedDetail" class="block mt-1 text-[11px] text-slate-500 dark:text-slate-400"></span>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1.5">
+                                <span class="font-semibold text-slate-700 dark:text-slate-300">Principal paid</span>
+                                <span id="trackerRepaidLabel" class="font-bold text-brand-500">0%</span>
+                            </div>
+                            <div class="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                                <div id="trackerRepaidBar" class="h-full bg-brand-500 rounded-full transition-all duration-500" style="width:0%"></div>
+                            </div>
+                            <span id="trackerRepaidDetail" class="block mt-1 text-[11px] text-slate-500 dark:text-slate-400"></span>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1.5">
+                                <span class="font-semibold text-slate-700 dark:text-slate-300">Interest paid</span>
+                                <span id="trackerInterestLabel" class="font-bold text-amber-600 dark:text-amber-400">0%</span>
+                            </div>
+                            <div class="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                                <div id="trackerInterestBar" class="h-full bg-amber-500 rounded-full transition-all duration-500" style="width:0%"></div>
+                            </div>
+                            <span id="trackerInterestDetail" class="block mt-1 text-[11px] text-slate-500 dark:text-slate-400"></span>
+                        </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1.5">
+                                <span class="font-semibold text-slate-700 dark:text-slate-300">Principal vs Interest So Far</span>
+                                <span id="trackerPaidTotal" class="font-bold text-slate-900 dark:text-white">$0</span>
+                            </div>
+                            <div class="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden flex">
+                                <div id="trackerSplitPrincipalBar" class="h-full bg-brand-500 transition-all duration-500" style="width:0%"></div>
+                                <div id="trackerSplitInterestBar" class="h-full bg-amber-500 transition-all duration-500" style="width:0%"></div>
+                            </div>
+                            <div class="flex flex-wrap justify-between gap-2 mt-1.5 text-[11px]">
+                                <span class="text-slate-500 dark:text-slate-400"><span class="inline-block w-2 h-2 rounded-full bg-brand-500 mr-1"></span>Principal incl. extras <span id="trackerPrincipalPaid" class="font-bold text-brand-600 dark:text-brand-400">$0</span></span>
+                                <span class="text-slate-500 dark:text-slate-400"><span class="inline-block w-2 h-2 rounded-full bg-amber-500 mr-1"></span>Interest <span id="trackerInterestPaid" class="font-bold text-amber-600 dark:text-amber-400">$0</span></span>
+                            </div>
+                            <p id="trackerOffsetSaved" class="hidden mt-2 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium"></p>
+                        </div>
+                    </div>
+
+                    <!-- Extra repayments -->
+                    <div class="p-4 rounded-xl border border-sky-500/30 bg-sky-50/60 dark:bg-sky-500/5">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                            <span class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center">
+                                <i class="fa-solid fa-circle-plus text-sky-500 mr-2"></i> Extra repayments
+                            </span>
+                            <span class="text-[11px] text-slate-500 dark:text-slate-400">Use a negative amount to correct an earlier entry</span>
+                        </div>
+
+                        <form id="extraRepaymentForm" class="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2 items-end" novalidate>
+                            <div>
+                                <label for="extraAmountInput" class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Amount</label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-semibold text-sm">$</span>
+                                    <input type="text" autocomplete="off" data-money="signed" id="extraAmountInput" placeholder="e.g. 5,000 or -500" data-native-undo class="w-full pl-7 pr-3 py-2 text-sm font-semibold text-slate-900 dark:text-white bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                                </div>
+                            </div>
+                            <div>
+                                <label for="extraDateInput" class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Date paid</label>
+                                <input type="date" id="extraDateInput" data-native-undo class="w-full px-3 py-2 text-sm font-semibold text-slate-900 dark:text-white bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                            </div>
+                            <button type="submit" class="px-4 py-2 text-sm font-bold rounded-xl bg-sky-600 hover:bg-sky-500 text-white transition-colors flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-plus"></i> Add
+                            </button>
+                        </form>
+
+                        <ul id="extraRepaymentList" class="mt-3 divide-y divide-slate-200/80 dark:divide-slate-800 text-xs"></ul>
+                    </div>
+
+                    <!-- Recent & upcoming payments -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span id="trackerTableTitle" class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Recent & upcoming payments</span>
+                            <button id="trackerShowAllBtn" type="button" class="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:underline">Show all payments</button>
+                        </div>
+                        <div id="trackerTableWrap" class="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-800">
+                            <table class="w-full text-left text-xs">
+                                <thead class="sticky top-0 bg-slate-50 dark:bg-slate-900">
+                                    <tr class="border-b border-slate-200 dark:border-slate-800 text-slate-400 uppercase font-semibold">
+                                        <th class="py-2.5 px-3">#</th>
+                                        <th class="py-2.5 px-3">Date</th>
+                                        <th class="py-2.5 px-3">Payment</th>
+                                        <th class="py-2.5 px-3">Principal</th>
+                                        <th class="py-2.5 px-3">Interest</th>
+                                        <th class="py-2.5 px-3 text-right">Balance</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="trackerTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+                                    <!-- JS populated rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="mt-2 text-[11px] text-slate-400 dark:text-slate-500 leading-tight">
+                            Assumes the rate, repayment and offset balance stay as entered for the whole loan. Check your lender statement for actual figures.
+                        </p>
                     </div>
                 </div>
             </section>
@@ -610,7 +607,7 @@
                         </label>
                         <div class="relative rounded-xl shadow-sm">
                             <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 font-semibold text-sm">$</span>
-                            <input type="number" id="offsetInput" value="50000" step="5000" min="0" class="w-full pl-8 pr-4 py-2.5 text-white text-base font-bold bg-slate-900/70 border border-emerald-500/30 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all">
+                            <input type="text" inputmode="decimal" autocomplete="off" data-money data-step="5000" id="offsetInput" value="50,000" class="w-full pl-8 pr-4 py-2.5 text-white text-base font-bold bg-slate-900/70 border border-emerald-500/30 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all">
                         </div>
                         <p class="text-[11px] text-slate-400 mt-1">
                             Money in your offset account offsets interest daily, keeping payments fixed while reducing your loan duration.
@@ -834,7 +831,7 @@
         const RATE_HISTORY_KEY = 'nsw_mortgage_rate_history_v1';
 
         // Re-orderable sections, in default order
-        const SECTION_IDS = ['repayment', 'offset', 'rates', 'chart', 'frequency', 'milestones'];
+        const SECTION_IDS = ['repayment', 'tracker', 'offset', 'rates', 'chart', 'frequency', 'milestones'];
 
         const FREQUENCIES = {
             weekly: { perYear: 52, suffix: '/ week', title: 'Weekly Repayment', name: 'Weekly' },
@@ -924,7 +921,6 @@
 
         const repaymentAmount = document.getElementById('repaymentAmount');
         const repaymentFreqSuffix = document.getElementById('repaymentFreqSuffix');
-        const freqLabelDisplay = document.getElementById('freqLabelDisplay');
 
         const summaryPrincipal = document.getElementById('summaryPrincipal');
         const summaryInterest = document.getElementById('summaryInterest');
@@ -1014,12 +1010,18 @@
             return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
         }
 
-        // Keep only known section ids (no duplicates) and append any missing ones
+        // Keep only known section ids (no duplicates) and slot any missing ones in after
+        // the section they follow by default (so a new section lands where it belongs)
         function normalizeSectionOrder(order) {
-            const valid = Array.isArray(order)
+            const result = Array.isArray(order)
                 ? order.filter((id, i) => SECTION_IDS.includes(id) && order.indexOf(id) === i)
                 : [];
-            return [...valid, ...SECTION_IDS.filter(id => !valid.includes(id))];
+            SECTION_IDS.forEach((id, i) => {
+                if (result.includes(id)) return;
+                const prev = SECTION_IDS.slice(0, i).reverse().find(p => result.includes(p));
+                result.splice(prev ? result.indexOf(prev) + 1 : 0, 0, id);
+            });
+            return result;
         }
 
         // Load state from localStorage
@@ -1155,9 +1157,9 @@
 
         // Sync inputs and buttons with current state JS object
         function syncFormWithState() {
-            propertyPriceInput.value = state.propertyPrice;
-            depositInput.value = state.deposit;
-            offsetInput.value = state.offsetBalance;
+            setMoneyInput(propertyPriceInput, state.propertyPrice);
+            setMoneyInput(depositInput, state.deposit);
+            setMoneyInput(offsetInput, state.offsetBalance);
 
             const depositPct = state.propertyPrice > 0 ? ((state.deposit / state.propertyPrice) * 100).toFixed(1) : 0;
             depositPercentInput.value = parseFloat(depositPct);
@@ -1215,6 +1217,65 @@
         // Whole dollars for purchase figures (price, loan amount, duty and fees)
         function formatAUDWhole(amount) {
             return audWhole.format(amount);
+        }
+
+        // Money fields ([data-money]): commas while typing, "$1,050,000" tidied to "1,050,000" on leaving the field
+        const moneyField = new Intl.NumberFormat('en-AU', { maximumFractionDigits: 2 });
+
+        function parseMoney(value) {
+            const n = parseFloat(String(value).replace(/[^0-9.\-]/g, ''));
+            return isFinite(n) ? n : NaN;
+        }
+
+        function setMoneyInput(input, amount) {
+            input.value = isFinite(amount) ? moneyField.format(amount) : '';
+        }
+
+        // Group the digits as typed, keeping a trailing "." and up to 2 decimals
+        function groupMoneyText(text, signed) {
+            const negative = signed && text.trim().startsWith('-');
+            const [whole, ...rest] = text.replace(/[^0-9.]/g, '').split('.');
+            const digits = whole.replace(/^0+(?=\d)/, '').replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            const decimals = rest.length ? '.' + rest.join('').slice(0, 2) : '';
+            return (negative ? '-' : '') + digits + decimals;
+        }
+
+        function setupMoneyInputs() {
+            const significant = (s) => s.replace(/[^0-9.\-]/g, '').length;
+
+            document.querySelectorAll('[data-money]').forEach(input => {
+                const signed = input.dataset.money === 'signed';
+
+                input.addEventListener('input', () => {
+                    const before = input.value;
+                    const after = groupMoneyText(before, signed);
+                    if (after === before) return;
+                    // Keep the caret after the same digit it was after before the commas moved
+                    const keep = significant(before.slice(0, input.selectionStart ?? before.length));
+                    let caret = 0;
+                    while (caret < after.length && significant(after.slice(0, caret)) < keep) caret++;
+                    input.value = after;
+                    input.setSelectionRange(caret, caret);
+                });
+
+                input.addEventListener('blur', () => {
+                    const amount = parseMoney(input.value);
+                    if (isFinite(amount)) setMoneyInput(input, amount);
+                    else if (!signed) setMoneyInput(input, 0);
+                });
+
+                // Arrow keys step the value like the old number inputs did
+                const step = parseFloat(input.dataset.step);
+                if (step) {
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+                        e.preventDefault();
+                        const current = parseMoney(input.value) || 0;
+                        setMoneyInput(input, Math.max(0, current + (e.key === 'ArrowUp' ? step : -step)));
+                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                    });
+                }
+            });
         }
 
         // Date helpers (local dates, stored as YYYY-MM-DD)
@@ -1640,6 +1701,8 @@
 
         // Setup UI Event Listeners
         function setupEventListeners() {
+            setupMoneyInputs();
+
             // Reset button
             document.getElementById('resetDefaultsBtn').addEventListener('click', resetToDefaults);
 
@@ -1704,13 +1767,13 @@
 
             // Property Price input
             propertyPriceInput.addEventListener('input', (e) => {
-                let val = parseFloat(e.target.value);
+                let val = parseMoney(e.target.value);
                 if (isNaN(val) || val < 0) val = 0;
                 state.propertyPrice = val;
 
                 if (state.deposit > state.propertyPrice) {
                     state.deposit = state.propertyPrice;
-                    depositInput.value = state.deposit;
+                    setMoneyInput(depositInput, state.deposit);
                 }
                 const pct = state.propertyPrice > 0 ? ((state.deposit / state.propertyPrice) * 100).toFixed(1) : 0;
                 depositPercentInput.value = parseFloat(pct);
@@ -1720,7 +1783,7 @@
 
             // Deposit Dollar Amount
             depositInput.addEventListener('input', (e) => {
-                let val = parseFloat(e.target.value);
+                let val = parseMoney(e.target.value);
                 if (isNaN(val) || val < 0) val = 0;
                 state.deposit = val;
 
@@ -1737,7 +1800,7 @@
                 if (pct > 100) pct = 100;
 
                 state.deposit = Math.round((pct / 100) * state.propertyPrice);
-                depositInput.value = state.deposit;
+                setMoneyInput(depositInput, state.deposit);
 
                 saveAndRecalculate();
             });
@@ -1751,7 +1814,7 @@
 
             // Offset Account Input
             offsetInput.addEventListener('input', (e) => {
-                let val = parseFloat(e.target.value);
+                let val = parseMoney(e.target.value);
                 if (isNaN(val) || val < 0) val = 0;
                 state.offsetBalance = val;
                 state.offsetBalanceAsOf = toISODate(new Date());
@@ -1905,7 +1968,7 @@
             document.getElementById('extraRepaymentForm').addEventListener('submit', (e) => {
                 e.preventDefault();
                 const amountInput = document.getElementById('extraAmountInput');
-                const amount = Math.round(parseFloat(amountInput.value) * 100) / 100;
+                const amount = Math.round(parseMoney(amountInput.value) * 100) / 100;
                 const date = extraDateInput.value;
 
                 if (!isFinite(amount) || amount === 0) {
@@ -2114,7 +2177,6 @@
             // Update Primary Display (Standard Scheduled Payment)
             repaymentAmount.textContent = formatAUD(activePayment);
             repaymentFreqSuffix.textContent = freq.suffix;
-            freqLabelDisplay.textContent = freq.title;
 
             summaryPrincipal.textContent = formatAUD(loanAmount);
             summaryInterest.textContent = formatAUD(offsetSchedule.totalInterest);
@@ -2781,7 +2843,7 @@
         // Re-check when the page is reopened or left open past a repayment date
         function checkOffsetDeductions() {
             if (applyDueOffsetDeductions(true)) {
-                offsetInput.value = state.offsetBalance;
+                setMoneyInput(offsetInput, state.offsetBalance);
                 calculateAll();
             }
         }

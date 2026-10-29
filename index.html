@@ -1479,67 +1479,88 @@
             document.getElementById('paramsChevron').style.transform = collapsed ? 'rotate(180deg)' : '';
         }
 
-        // Collapse: fade out the inputs, shrink the panel, then fade the summary chips in left to right.
-        // Expand: fade the chips out, grow the panel, then fade the inputs in.
+        // Panel animation timings (ms)
+        const PANEL_FIELD_FADE = 220;   // each field fading out / in
+        const PANEL_FIELD_STAGGER = 45; // gap between fields
+        const PANEL_HEIGHT_CHANGE = 380;
+        const PANEL_CHIP_FADE = 380;    // each summary chip fading in
+        const PANEL_CHIP_STAGGER = 140; // gap between chips, left to right
+
+        // Each field block inside the open panel, top to bottom (grids are split into their fields)
+        function paramsFieldItems() {
+            return [...document.getElementById('paramsBody').children]
+                .flatMap(block => block.classList.contains('grid') ? [...block.children] : [block]);
+        }
+
+        // Hide: fields fade out bottom to top, the panel shrinks, then the summary chips fade in left to right.
+        // Edit: the reverse - chips fade out right to left, the panel grows, then fields fade in top to bottom.
+        // Plays even with the system's reduced-motion setting on, as the panel's open/closed change is easier to follow.
         async function animateParamsPanel(collapse) {
             const panel = document.getElementById('paramsPanel');
-            const body = document.getElementById('paramsBody');
             const summary = document.getElementById('paramsSummary');
-            const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches || !Element.prototype.animate;
 
             // A newer toggle replaces this run: finish what's on screen and let this run stop at its next step
             const run = ++paramsAnimationRun;
             paramsPanelAnimations.forEach(a => a.finish());
             paramsPanelAnimations.forEach(a => a.cancel());
             paramsPanelAnimations = [];
-            body.style.opacity = '';
+            paramsFieldItems().forEach(el => { el.style.opacity = ''; });
             panel.style.overflow = '';
 
-            // Wait for an animation, but never longer than its duration plus a little (frames can stall in background tabs)
-            const track = (animation, duration) => {
-                paramsPanelAnimations.push(animation);
-                return Promise.race([
-                    animation.finished.catch(() => {}),
-                    new Promise(resolve => setTimeout(resolve, duration + 250))
-                ]).then(() => animation.playState !== 'finished' && animation.finish());
-            };
-            const superseded = () => run !== paramsAnimationRun;
-
-            if (reduced) {
+            if (!Element.prototype.animate) {
                 paramsPanelAnimating = false;
                 updateParamsPanelUI();
                 return;
             }
-            paramsPanelAnimating = true;
-            const easing = 'cubic-bezier(0.22, 1, 0.36, 1)';
 
-            if (collapse) {
-                await track(body.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 150, fill: 'forwards' }), 150);
-            } else {
-                await Promise.all([...summary.children].map(chip =>
-                    track(chip.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 120, fill: 'forwards' }), 120)));
-            }
+            // Wait for animations, but never longer than they should take (frames can stall in background tabs)
+            const track = (animations, totalMs) => {
+                paramsPanelAnimations.push(...animations);
+                return Promise.race([
+                    Promise.all(animations.map(a => a.finished.catch(() => {}))),
+                    new Promise(resolve => setTimeout(resolve, totalMs + 250))
+                ]).then(() => animations.forEach(a => a.playState !== 'finished' && a.finish()));
+            };
+            const superseded = () => run !== paramsAnimationRun;
+            const staggerTotal = (count, each, gap) => each + Math.max(0, count - 1) * gap;
+            const easing = 'cubic-bezier(0.22, 1, 0.36, 1)';
+            paramsPanelAnimating = true;
+
+            // Step 1: fade out what's showing (fields bottom to top, or chips right to left)
+            const outgoing = collapse ? paramsFieldItems().reverse() : [...summary.children].reverse();
+            const outEach = collapse ? PANEL_FIELD_FADE : 200;
+            const outGap = collapse ? PANEL_FIELD_STAGGER : 70;
+            await track(outgoing.map((el, i) => el.animate(
+                [{ opacity: 1, transform: 'translateY(0)' }, { opacity: 0, transform: `translateY(${collapse ? -4 : 4}px)` }],
+                { duration: outEach, delay: i * outGap, easing: 'ease-in', fill: 'forwards' }
+            )), staggerTotal(outgoing.length, outEach, outGap));
             if (superseded()) return;
 
+            // Step 2: change the panel height
             const startHeight = panel.offsetHeight;
             updateParamsPanelUI();
-            if (!collapse) body.style.opacity = '0';
-            const chips = collapse ? [...summary.children] : [];
-            chips.forEach(chip => { chip.style.opacity = '0'; });
+            const incoming = collapse ? [...summary.children] : paramsFieldItems();
+            incoming.forEach(el => { el.style.opacity = '0'; });
             const endHeight = panel.offsetHeight;
 
             panel.style.overflow = 'hidden';
-            await track(panel.animate([{ height: `${startHeight}px` }, { height: `${endHeight}px` }], { duration: 320, easing }), 320);
+            await track([panel.animate([{ height: `${startHeight}px` }, { height: `${endHeight}px` }], { duration: PANEL_HEIGHT_CHANGE, easing })], PANEL_HEIGHT_CHANGE);
             if (superseded()) return;
             panel.style.overflow = '';
             paramsPanelAnimations.forEach(a => a.cancel()); // drop the held fade-outs
             paramsPanelAnimations = [];
 
+            // Step 3: fade in what's now showing (chips left to right, or fields top to bottom)
             if (collapse) {
-                fadeInSummaryChips(chips);
+                fadeInSummaryChips(incoming);
             } else {
-                body.style.opacity = '';
-                paramsPanelAnimations.push(body.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220, easing: 'ease-out' }));
+                incoming.forEach((el, i) => {
+                    el.style.opacity = '';
+                    paramsPanelAnimations.push(el.animate(
+                        [{ opacity: 0, transform: 'translateY(-4px)' }, { opacity: 1, transform: 'translateY(0)' }],
+                        { duration: PANEL_FIELD_FADE + 40, delay: i * PANEL_FIELD_STAGGER, easing: 'ease-out', fill: 'backwards' }
+                    ));
+                });
             }
             paramsPanelAnimating = false;
         }
@@ -1548,10 +1569,10 @@
             chips.forEach((chip, i) => {
                 chip.style.opacity = '';
                 if (!Element.prototype.animate) return;
-                chip.animate(
+                paramsPanelAnimations.push(chip.animate(
                     [{ opacity: 0, transform: 'translateY(4px)' }, { opacity: 1, transform: 'translateY(0)' }],
-                    { duration: 240, delay: i * 70, easing: 'ease-out', fill: 'backwards' }
-                );
+                    { duration: PANEL_CHIP_FADE, delay: i * PANEL_CHIP_STAGGER, easing: 'ease-out', fill: 'backwards' }
+                ));
             });
         }
 

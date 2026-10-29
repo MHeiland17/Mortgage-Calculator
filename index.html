@@ -271,10 +271,10 @@
                 </div>
 
                 <!-- Amount Borrowed / Loan Amount -->
-                <div class="mt-6 py-3 px-4 bg-brand-50/60 dark:bg-brand-900/20 rounded-xl border border-brand-100 dark:border-brand-900/40">
+                <div class="mt-6 py-3 px-4 bg-brand-50/60 dark:bg-brand-500/10 rounded-xl border border-brand-100 dark:border-brand-500/40">
                     <div class="flex justify-between items-center">
-                        <span class="text-xs font-bold text-brand-900 dark:text-brand-200 uppercase tracking-wider">Loan Amount Borrowed</span>
-                        <span id="loanAmountDisplay" class="text-lg font-extrabold text-brand-700 dark:text-brand-400">$760,000</span>
+                        <span class="text-xs font-bold text-brand-700 dark:text-brand-500 uppercase tracking-wider">Loan Amount Borrowed</span>
+                        <span id="loanAmountDisplay" class="text-lg font-extrabold text-brand-700 dark:text-brand-500">$760,000</span>
                     </div>
                 </div>
 
@@ -462,66 +462,78 @@
                         </div>
                     </div>
 
-                    <!-- Progress bars -->
-                    <div class="space-y-4">
-                        <!-- 2x2 grid: total paid and term elapsed (neutral), then principal and interest paid
-                             in the same left/right order as the split bar below (stacked on mobile) -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <div class="flex justify-between text-xs mb-1.5">
-                                <span class="font-semibold text-slate-700 dark:text-slate-300">Total Paid (Interest and Principal)</span>
-                                <span id="trackerTotalLabel" class="font-bold text-slate-900 dark:text-white">0%</span>
+                    <!-- Progress bars, tucked into a "Show / hide breakdown" card -->
+                    <div class="rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800">
+                        <button id="trackerBreakdownToggle" type="button" aria-expanded="false" aria-controls="trackerBreakdownBody" class="w-full flex items-center justify-between gap-3 px-4 py-3 text-left rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors">
+                            <span class="min-w-0">
+                                <span class="block text-sm font-bold text-slate-900 dark:text-white">Breakdown</span>
+                                <span id="trackerBreakdownSummary" class="block text-[11px] text-slate-500 dark:text-slate-400 truncate"></span>
+                            </span>
+                            <span class="flex items-center gap-2 shrink-0 text-xs font-semibold text-brand-500">
+                                <span id="trackerBreakdownLabel">Show breakdown</span>
+                                <i id="trackerBreakdownChevron" class="fa-solid fa-chevron-down text-[10px] transition-transform"></i>
+                            </span>
+                        </button>
+                        <div id="trackerBreakdownBody" class="hidden px-4 pb-4 pt-4 border-t border-slate-200/80 dark:border-slate-800 space-y-4">
+                            <!-- 2x2 grid: total paid and term elapsed (neutral), then principal and interest paid
+                                 in the same left/right order as the split bar below (stacked on mobile) -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <div class="flex justify-between text-xs mb-1.5">
+                                    <span class="font-semibold text-slate-700 dark:text-slate-300">Total Paid (Interest and Principal)</span>
+                                    <span id="trackerTotalLabel" class="font-bold text-slate-900 dark:text-white">0%</span>
+                                </div>
+                                <div class="h-2.5 rounded-full bg-slate-200 dark:bg-slate-700/60 overflow-hidden">
+                                    <div id="trackerTotalBar" class="h-full bg-slate-400 rounded-full transition-all duration-500" style="width:0%"></div>
+                                </div>
+                                <span id="trackerTotalDetail" class="block mt-1 text-[11px] text-slate-500 dark:text-slate-400"></span>
                             </div>
-                            <div class="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                                <div id="trackerTotalBar" class="h-full bg-slate-400 rounded-full transition-all duration-500" style="width:0%"></div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1.5">
+                                    <span class="font-semibold text-slate-700 dark:text-slate-300">Loan term elapsed</span>
+                                    <span id="trackerElapsedLabel" class="font-bold text-slate-900 dark:text-white">0%</span>
+                                </div>
+                                <div class="h-2.5 rounded-full bg-slate-200 dark:bg-slate-700/60 overflow-hidden">
+                                    <div id="trackerElapsedBar" class="h-full bg-slate-400 rounded-full transition-all duration-500" style="width:0%"></div>
+                                </div>
+                                <span id="trackerElapsedDetail" class="block mt-1 text-[11px] text-slate-500 dark:text-slate-400"></span>
                             </div>
-                            <span id="trackerTotalDetail" class="block mt-1 text-[11px] text-slate-500 dark:text-slate-400"></span>
-                        </div>
-                        <div>
-                            <div class="flex justify-between text-xs mb-1.5">
-                                <span class="font-semibold text-slate-700 dark:text-slate-300">Loan term elapsed</span>
-                                <span id="trackerElapsedLabel" class="font-bold text-slate-900 dark:text-white">0%</span>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1.5">
+                                    <span class="font-semibold text-slate-700 dark:text-slate-300">Principal paid</span>
+                                    <span id="trackerRepaidLabel" class="font-bold text-brand-500">0%</span>
+                                </div>
+                                <div class="h-2.5 rounded-full bg-slate-200 dark:bg-slate-700/60 overflow-hidden">
+                                    <div id="trackerRepaidBar" class="h-full bg-brand-500 rounded-full transition-all duration-500" style="width:0%"></div>
+                                </div>
+                                <span id="trackerRepaidDetail" class="block mt-1 text-[11px] text-slate-500 dark:text-slate-400"></span>
                             </div>
-                            <div class="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                                <div id="trackerElapsedBar" class="h-full bg-slate-400 rounded-full transition-all duration-500" style="width:0%"></div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1.5">
+                                    <span class="font-semibold text-slate-700 dark:text-slate-300">Interest paid</span>
+                                    <span id="trackerInterestLabel" class="font-bold text-amber-600 dark:text-amber-400">0%</span>
+                                </div>
+                                <div class="h-2.5 rounded-full bg-slate-200 dark:bg-slate-700/60 overflow-hidden">
+                                    <div id="trackerInterestBar" class="h-full bg-amber-500 rounded-full transition-all duration-500" style="width:0%"></div>
+                                </div>
+                                <span id="trackerInterestDetail" class="block mt-1 text-[11px] text-slate-500 dark:text-slate-400"></span>
                             </div>
-                            <span id="trackerElapsedDetail" class="block mt-1 text-[11px] text-slate-500 dark:text-slate-400"></span>
-                        </div>
-                        <div>
-                            <div class="flex justify-between text-xs mb-1.5">
-                                <span class="font-semibold text-slate-700 dark:text-slate-300">Principal paid</span>
-                                <span id="trackerRepaidLabel" class="font-bold text-brand-500">0%</span>
                             </div>
-                            <div class="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                                <div id="trackerRepaidBar" class="h-full bg-brand-500 rounded-full transition-all duration-500" style="width:0%"></div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1.5">
+                                    <span class="font-semibold text-slate-700 dark:text-slate-300">Principal vs Interest So Far</span>
+                                    <span id="trackerPaidTotal" class="font-bold text-slate-900 dark:text-white">$0</span>
+                                </div>
+                                <div class="h-2.5 rounded-full bg-slate-200 dark:bg-slate-700/60 overflow-hidden flex">
+                                    <div id="trackerSplitPrincipalBar" class="h-full bg-brand-500 transition-all duration-500" style="width:0%"></div>
+                                    <div id="trackerSplitInterestBar" class="h-full bg-amber-500 transition-all duration-500" style="width:0%"></div>
+                                </div>
+                                <div class="flex flex-wrap justify-between gap-2 mt-1.5 text-[11px]">
+                                    <span class="text-slate-500 dark:text-slate-400"><span class="inline-block w-2 h-2 rounded-full bg-brand-500 mr-1"></span>Principal incl. extras <span id="trackerPrincipalPaid" class="font-bold text-brand-600 dark:text-brand-400">$0</span></span>
+                                    <span class="text-slate-500 dark:text-slate-400"><span class="inline-block w-2 h-2 rounded-full bg-amber-500 mr-1"></span>Interest <span id="trackerInterestPaid" class="font-bold text-amber-600 dark:text-amber-400">$0</span></span>
+                                </div>
+                                <p id="trackerOffsetSaved" class="hidden mt-2 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium"></p>
                             </div>
-                            <span id="trackerRepaidDetail" class="block mt-1 text-[11px] text-slate-500 dark:text-slate-400"></span>
-                        </div>
-                        <div>
-                            <div class="flex justify-between text-xs mb-1.5">
-                                <span class="font-semibold text-slate-700 dark:text-slate-300">Interest paid</span>
-                                <span id="trackerInterestLabel" class="font-bold text-amber-600 dark:text-amber-400">0%</span>
-                            </div>
-                            <div class="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                                <div id="trackerInterestBar" class="h-full bg-amber-500 rounded-full transition-all duration-500" style="width:0%"></div>
-                            </div>
-                            <span id="trackerInterestDetail" class="block mt-1 text-[11px] text-slate-500 dark:text-slate-400"></span>
-                        </div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between text-xs mb-1.5">
-                                <span class="font-semibold text-slate-700 dark:text-slate-300">Principal vs Interest So Far</span>
-                                <span id="trackerPaidTotal" class="font-bold text-slate-900 dark:text-white">$0</span>
-                            </div>
-                            <div class="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden flex">
-                                <div id="trackerSplitPrincipalBar" class="h-full bg-brand-500 transition-all duration-500" style="width:0%"></div>
-                                <div id="trackerSplitInterestBar" class="h-full bg-amber-500 transition-all duration-500" style="width:0%"></div>
-                            </div>
-                            <div class="flex flex-wrap justify-between gap-2 mt-1.5 text-[11px]">
-                                <span class="text-slate-500 dark:text-slate-400"><span class="inline-block w-2 h-2 rounded-full bg-brand-500 mr-1"></span>Principal incl. extras <span id="trackerPrincipalPaid" class="font-bold text-brand-600 dark:text-brand-400">$0</span></span>
-                                <span class="text-slate-500 dark:text-slate-400"><span class="inline-block w-2 h-2 rounded-full bg-amber-500 mr-1"></span>Interest <span id="trackerInterestPaid" class="font-bold text-amber-600 dark:text-amber-400">$0</span></span>
-                            </div>
-                            <p id="trackerOffsetSaved" class="hidden mt-2 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium"></p>
                         </div>
                     </div>
 
@@ -765,23 +777,34 @@
                     <div data-section-controls></div>
                 </div>
 
-                <div class="grid grid-cols-3 gap-3 sm:gap-4">
-                    <div class="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 text-center">
-                        <span class="text-xs text-slate-500 dark:text-slate-400 font-medium block mb-1">Weekly</span>
+                <!-- One card per frequency; the selected one is highlighted green with a "Selected" tag on its bottom border,
+                     the others show what they'd cost compared with it (stacked on mobile) -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-4 pb-3">
+                    <div data-freq-card="weekly" class="relative p-4 rounded-xl border text-center transition-colors bg-slate-50 dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-800">
+                        <span data-freq-name class="text-xs block mb-1">Weekly</span>
                         <span id="freqWeeklyVal" class="text-sm sm:text-base font-bold text-slate-900 dark:text-white">$1,067</span>
                         <span class="text-[10px] text-slate-400 block mt-0.5">52 payments/yr</span>
+                        <div data-freq-diff class="mt-3 pt-3 border-t border-slate-200/80 dark:border-slate-700/60 space-y-0.5 text-[11px]"></div>
+                        <span data-freq-selected class="hidden absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-1/2 px-2.5 py-0.5 rounded-full bg-brand-500 text-white text-[10px] font-bold uppercase tracking-wider"><i class="fa-solid fa-check mr-1"></i>Selected</span>
                     </div>
-                    <div class="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 text-center">
-                        <span class="text-xs text-slate-500 dark:text-slate-400 font-medium block mb-1">Fortnightly</span>
+                    <div data-freq-card="fortnightly" class="relative p-4 rounded-xl border text-center transition-colors bg-slate-50 dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-800">
+                        <span data-freq-name class="text-xs block mb-1">Fortnightly</span>
                         <span id="freqFortnightlyVal" class="text-sm sm:text-base font-bold text-slate-900 dark:text-white">$2,135</span>
                         <span class="text-[10px] text-slate-400 block mt-0.5">26 payments/yr</span>
+                        <div data-freq-diff class="mt-3 pt-3 border-t border-slate-200/80 dark:border-slate-700/60 space-y-0.5 text-[11px]"></div>
+                        <span data-freq-selected class="hidden absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-1/2 px-2.5 py-0.5 rounded-full bg-brand-500 text-white text-[10px] font-bold uppercase tracking-wider"><i class="fa-solid fa-check mr-1"></i>Selected</span>
                     </div>
-                    <div class="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 text-center border-brand-500/50">
-                        <span class="text-xs text-brand-600 dark:text-brand-400 font-bold block mb-1">Monthly</span>
+                    <div data-freq-card="monthly" class="relative p-4 rounded-xl border text-center transition-colors bg-slate-50 dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-800">
+                        <span data-freq-name class="text-xs block mb-1">Monthly</span>
                         <span id="freqMonthlyVal" class="text-sm sm:text-base font-bold text-slate-900 dark:text-white">$4,625</span>
                         <span class="text-[10px] text-slate-400 block mt-0.5">12 payments/yr</span>
+                        <div data-freq-diff class="mt-3 pt-3 border-t border-slate-200/80 dark:border-slate-700/60 space-y-0.5 text-[11px]"></div>
+                        <span data-freq-selected class="hidden absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-1/2 px-2.5 py-0.5 rounded-full bg-brand-500 text-white text-[10px] font-bold uppercase tracking-wider"><i class="fa-solid fa-check mr-1"></i>Selected</span>
                     </div>
                 </div>
+                <p class="mt-2 text-[11px] text-slate-400 dark:text-slate-500 leading-tight">
+                    Differences are for the scheduled repayments over the full term, before any offset or extra repayments.
+                </p>
             </section>
 
             <!-- Amortization Milestone Summary -->
@@ -899,7 +922,8 @@
             offsetBalanceAsOf: '', // YYYY-MM-DD the offset balance was last entered or updated
             sectionOrder: [...SECTION_IDS],
             paramsCollapsed: false,
-            dutyExpanded: false
+            dutyExpanded: false,
+            trackerBreakdownExpanded: false
         };
 
         // Current reactive state
@@ -963,7 +987,7 @@
         let rateMismatch = null; // { lender, variable, fixed } when the entered rate isn't one of the current bank's rates
 
         // Undo / redo history of state snapshots (view-only settings are left out)
-        const HISTORY_IGNORED_KEYS = ['paramsCollapsed', 'dutyExpanded', 'chartMode', 'ratesPurpose'];
+        const HISTORY_IGNORED_KEYS = ['paramsCollapsed', 'dutyExpanded', 'trackerBreakdownExpanded', 'chartMode', 'ratesPurpose'];
         const HISTORY_LIMIT = 100;
         const HISTORY_GROUP_MS = 700; // rapid changes (e.g. typing a number) become one undo step
         const history = { past: [], future: [], committed: null, pendingBase: null, timer: null };
@@ -995,6 +1019,7 @@
             if (!['OWNER_OCCUPIED', 'INVESTMENT'].includes(merged.ratesPurpose)) merged.ratesPurpose = defaultState.ratesPurpose;
             if (!LENDERS.some(l => l.name === merged.currentBank)) merged.currentBank = '';
             merged.deductRepaymentsFromOffset = merged.deductRepaymentsFromOffset === true;
+            merged.trackerBreakdownExpanded = merged.trackerBreakdownExpanded === true;
             if (!isValidISODate(merged.offsetBalanceAsOf)) merged.offsetBalanceAsOf = '';
             if (!isValidISODate(merged.loanStartDate)) merged.loanStartDate = '';
             if (!isValidISODate(merged.firstPaymentDate)) merged.firstPaymentDate = '';
@@ -1196,6 +1221,7 @@
             // Collapsible panels & section layout
             updateParamsPanelUI();
             updateDutyPanelUI();
+            updateTrackerBreakdownUI();
             applySectionOrder();
 
             // Lender rate comparison: owner occupier or investor
@@ -1674,6 +1700,14 @@
             await animateParamsPanel(false);
         }
 
+        function updateTrackerBreakdownUI() {
+            const expanded = state.trackerBreakdownExpanded;
+            document.getElementById('trackerBreakdownBody').classList.toggle('hidden', !expanded);
+            document.getElementById('trackerBreakdownToggle').setAttribute('aria-expanded', String(expanded));
+            document.getElementById('trackerBreakdownLabel').textContent = expanded ? 'Hide breakdown' : 'Show breakdown';
+            document.getElementById('trackerBreakdownChevron').style.transform = expanded ? 'rotate(180deg)' : '';
+        }
+
         function updateDutyPanelUI() {
             const expanded = state.dutyExpanded;
             document.getElementById('dutyBody').classList.toggle('hidden', !expanded);
@@ -1762,6 +1796,12 @@
             document.getElementById('dutyToggle').addEventListener('click', () => {
                 state.dutyExpanded = !state.dutyExpanded;
                 updateDutyPanelUI();
+                saveStateToStorage();
+            });
+
+            document.getElementById('trackerBreakdownToggle').addEventListener('click', () => {
+                state.trackerBreakdownExpanded = !state.trackerBreakdownExpanded;
+                updateTrackerBreakdownUI();
                 saveStateToStorage();
             });
 
@@ -2115,6 +2155,54 @@
             return `${yrs} yrs ${mos} mos`;
         }
 
+        // Frequency cards: highlight the selected one, and show the others' cost per year and
+        // total interest over the term compared with it (positive = costs more than the selected one)
+        const FREQ_CARD_CLASSES = {
+            selected: ['bg-brand-500/10', 'border-brand-500', 'ring-1', 'ring-brand-500/40'],
+            other: ['bg-slate-50', 'dark:bg-slate-800/40', 'border-slate-200/80', 'dark:border-slate-800']
+        };
+
+        function renderFrequencyComparison(loanAmount, years, payments) {
+            const totals = {};
+            Object.entries(FREQUENCIES).forEach(([key, f]) => {
+                const perYear = payments[key] * f.perYear;
+                const paid = perYear * years;
+                totals[key] = { perYear, interest: state.repaymentType === 'IO' ? paid : paid - loanAmount };
+            });
+            const base = totals[state.frequency];
+            const baseName = FREQUENCIES[state.frequency].name.toLowerCase();
+
+            const diffLine = (diff, what) => {
+                if (Math.abs(diff) < 0.005) return `<div class="text-slate-400">Same ${what}</div>`;
+                const tone = diff > 0 ? 'text-amber-500 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400';
+                return `<div><span class="font-bold ${tone}">${diff > 0 ? '+' : '−'}${formatAUD(Math.abs(diff))}</span> <span class="text-slate-500 dark:text-slate-400">${what}</span></div>`;
+            };
+
+            document.querySelectorAll('[data-freq-card]').forEach(card => {
+                const key = card.dataset.freqCard;
+                const selected = key === state.frequency;
+                card.classList.remove(...FREQ_CARD_CLASSES.selected, ...FREQ_CARD_CLASSES.other);
+                card.classList.add(...FREQ_CARD_CLASSES[selected ? 'selected' : 'other']);
+                card.querySelector('[data-freq-selected]').classList.toggle('hidden', !selected);
+
+                const name = card.querySelector('[data-freq-name]');
+                name.classList.toggle('font-bold', selected);
+                name.classList.toggle('text-brand-500', selected);
+                name.classList.toggle('font-medium', !selected);
+                name.classList.toggle('text-slate-500', !selected);
+                name.classList.toggle('dark:text-slate-400', !selected);
+
+                const t = totals[key];
+                card.querySelector('[data-freq-diff]').innerHTML = selected
+                    ? `<div class="text-slate-500 dark:text-slate-400">Your current frequency</div>
+                       <div><span class="font-bold text-slate-700 dark:text-slate-200">${formatAUD(t.perYear)}</span> <span class="text-slate-500 dark:text-slate-400">per year</span></div>
+                       <div><span class="font-bold text-slate-700 dark:text-slate-200">${formatAUD(t.interest)}</span> <span class="text-slate-500 dark:text-slate-400">interest</span></div>`
+                    : `<div class="text-slate-500 dark:text-slate-400">vs ${baseName}</div>
+                       ${diffLine(t.perYear - base.perYear, 'per year')}
+                       ${diffLine(t.interest - base.interest, 'interest')}`;
+            });
+        }
+
         // Primary Calculation Engine
         function calculateAll() {
             const loanAmount = Math.max(0, state.propertyPrice - state.deposit);
@@ -2218,6 +2306,7 @@
             freqWeeklyVal.textContent = formatAUD(weeklyPayment);
             freqFortnightlyVal.textContent = formatAUD(fortnightlyPayment);
             freqMonthlyVal.textContent = formatAUD(monthlyPayment);
+            renderFrequencyComparison(loanAmount, years, { weekly: weeklyPayment, fortnightly: fortnightlyPayment, monthly: monthlyPayment });
 
             // NSW Stamp Duty calculations
             const stampDuty = calculateNSWStampDuty(state.propertyPrice, state.isFHB, state.propertyType);
@@ -3053,6 +3142,8 @@
             document.getElementById('trackerTotalLabel').textContent = `${totalPct.toFixed(1)}%`;
             document.getElementById('trackerTotalDetail').textContent = `${formatAUD(totalPaid)} of ${formatAUD(projectedTotal)} projected`;
             document.getElementById('trackerTotalBar').style.width = `${totalPct}%`;
+            document.getElementById('trackerBreakdownSummary').textContent =
+                `${totalPct.toFixed(1)}% paid · ${elapsedPct.toFixed(1)}% of term · ${repaidPct.toFixed(1)}% principal · ${interestPct.toFixed(1)}% interest`;
 
             const principalShare = totalPaid > 0 ? (principalPaid / totalPaid) * 100 : 0;
             const interestShare = totalPaid > 0 ? 100 - principalShare : 0;

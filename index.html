@@ -160,7 +160,7 @@
     </div>
 
     <!-- Collapsible Loan Parameters Header Section -->
-    <section id="paramsPanel" class="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-slate-800 shadow-sm">
+    <section id="paramsPanel" class="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-slate-800 shadow-sm md:top-16 z-20">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <button id="paramsToggle" type="button" aria-expanded="true" aria-controls="paramsBody" class="w-full flex items-center justify-between gap-3 py-4 text-left">
                 <span class="flex items-center gap-2.5">
@@ -171,7 +171,7 @@
                     </span>
                 </span>
                 <span class="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                    <span id="paramsToggleLabel">Collapse</span>
+                    <span id="paramsToggleLabel">Hide</span>
                     <i id="paramsChevron" class="fa-solid fa-chevron-up transition-transform"></i>
                 </span>
             </button>
@@ -960,6 +960,10 @@
         let bankRates = null; // { fetchedAt, lenders: [{ name, ok, error, rates: [...] }] }
         let bankRatesLoading = false;
         let rateHistory = { since: null, rates: {} }; // { since, rates: { key: { rate, previous, changedAt } } }
+        let paramsAutoCollapsed = false; // panel folded itself away on scroll; reopens at the top of the page
+        let paramsPanelAnimating = false;
+        let paramsPanelAnimations = [];
+        let paramsAnimationRun = 0;
         let rateMismatch = null; // { lender, variable, fixed } when the entered rate isn't one of the current bank's rates
 
         // Undo / redo history of state snapshots (view-only settings are left out)
@@ -1459,13 +1463,133 @@
         }
 
         // 4. Collapsible header panels
+        // Collapsed when the user chose it (saved) or when it folded itself away on scroll (not saved)
+        function isParamsCollapsed() {
+            return state.paramsCollapsed || paramsAutoCollapsed;
+        }
+
         function updateParamsPanelUI() {
-            const collapsed = state.paramsCollapsed;
+            const collapsed = isParamsCollapsed();
             document.getElementById('paramsBody').classList.toggle('hidden', collapsed);
             document.getElementById('paramsSummary').classList.toggle('hidden', !collapsed);
+            // The collapsed bar stays pinned under the top bar on desktop
+            document.getElementById('paramsPanel').classList.toggle('md:sticky', collapsed);
             document.getElementById('paramsToggle').setAttribute('aria-expanded', String(!collapsed));
-            document.getElementById('paramsToggleLabel').textContent = collapsed ? 'Edit' : 'Collapse';
+            document.getElementById('paramsToggleLabel').textContent = collapsed ? 'Edit' : 'Hide';
             document.getElementById('paramsChevron').style.transform = collapsed ? 'rotate(180deg)' : '';
+        }
+
+        // Collapse: fade out the inputs, shrink the panel, then fade the summary chips in left to right.
+        // Expand: fade the chips out, grow the panel, then fade the inputs in.
+        async function animateParamsPanel(collapse) {
+            const panel = document.getElementById('paramsPanel');
+            const body = document.getElementById('paramsBody');
+            const summary = document.getElementById('paramsSummary');
+            const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches || !Element.prototype.animate;
+
+            // A newer toggle replaces this run: finish what's on screen and let this run stop at its next step
+            const run = ++paramsAnimationRun;
+            paramsPanelAnimations.forEach(a => a.finish());
+            paramsPanelAnimations.forEach(a => a.cancel());
+            paramsPanelAnimations = [];
+            body.style.opacity = '';
+            panel.style.overflow = '';
+
+            // Wait for an animation, but never longer than its duration plus a little (frames can stall in background tabs)
+            const track = (animation, duration) => {
+                paramsPanelAnimations.push(animation);
+                return Promise.race([
+                    animation.finished.catch(() => {}),
+                    new Promise(resolve => setTimeout(resolve, duration + 250))
+                ]).then(() => animation.playState !== 'finished' && animation.finish());
+            };
+            const superseded = () => run !== paramsAnimationRun;
+
+            if (reduced) {
+                paramsPanelAnimating = false;
+                updateParamsPanelUI();
+                return;
+            }
+            paramsPanelAnimating = true;
+            const easing = 'cubic-bezier(0.22, 1, 0.36, 1)';
+
+            if (collapse) {
+                await track(body.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 150, fill: 'forwards' }), 150);
+            } else {
+                await Promise.all([...summary.children].map(chip =>
+                    track(chip.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 120, fill: 'forwards' }), 120)));
+            }
+            if (superseded()) return;
+
+            const startHeight = panel.offsetHeight;
+            updateParamsPanelUI();
+            if (!collapse) body.style.opacity = '0';
+            const chips = collapse ? [...summary.children] : [];
+            chips.forEach(chip => { chip.style.opacity = '0'; });
+            const endHeight = panel.offsetHeight;
+
+            panel.style.overflow = 'hidden';
+            await track(panel.animate([{ height: `${startHeight}px` }, { height: `${endHeight}px` }], { duration: 320, easing }), 320);
+            if (superseded()) return;
+            panel.style.overflow = '';
+            paramsPanelAnimations.forEach(a => a.cancel()); // drop the held fade-outs
+            paramsPanelAnimations = [];
+
+            if (collapse) {
+                fadeInSummaryChips(chips);
+            } else {
+                body.style.opacity = '';
+                paramsPanelAnimations.push(body.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220, easing: 'ease-out' }));
+            }
+            paramsPanelAnimating = false;
+        }
+
+        function fadeInSummaryChips(chips) {
+            chips.forEach((chip, i) => {
+                chip.style.opacity = '';
+                if (!Element.prototype.animate) return;
+                chip.animate(
+                    [{ opacity: 0, transform: 'translateY(4px)' }, { opacity: 1, transform: 'translateY(0)' }],
+                    { duration: 240, delay: i * 70, easing: 'ease-out', fill: 'backwards' }
+                );
+            });
+        }
+
+        // Fold the open panel away once it has scrolled past (desktop), keeping the page content where it was,
+        // and open it again when the user is back at the top
+        function handleParamsAutoCollapse() {
+            if (!window.matchMedia('(min-width: 768px)').matches || paramsPanelAnimating) return;
+            const panel = document.getElementById('paramsPanel');
+
+            if (!isParamsCollapsed()) {
+                const topBarHeight = document.querySelector('header').offsetHeight;
+                if (panel.getBoundingClientRect().bottom >= topBarHeight) return;
+                const startHeight = panel.offsetHeight;
+                paramsAutoCollapsed = true;
+                updateParamsPanelUI();
+                window.scrollBy(0, -(startHeight - panel.offsetHeight));
+                fadeInSummaryChips([...document.getElementById('paramsSummary').children]);
+            } else if (paramsAutoCollapsed && window.scrollY <= 2) {
+                paramsAutoCollapsed = false;
+                animateParamsPanel(false);
+            }
+        }
+
+        // Open the panel from anywhere: scroll back to the top first so it opens in place
+        async function expandParamsPanel() {
+            paramsAutoCollapsed = false;
+            if (state.paramsCollapsed) {
+                state.paramsCollapsed = false;
+                saveStateToStorage();
+            }
+            if (window.scrollY > 2) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                const started = performance.now();
+                while (window.scrollY > 2 && performance.now() - started < 1500) {
+                    await new Promise(resolve => requestAnimationFrame(resolve));
+                }
+            }
+            await animateParamsPanel(false);
         }
 
         function updateDutyPanelUI() {
@@ -1530,12 +1654,26 @@
 
             // Collapsible parameters header & duty section
             const toggleParams = () => {
-                state.paramsCollapsed = !state.paramsCollapsed;
-                updateParamsPanelUI();
-                saveStateToStorage();
+                if (isParamsCollapsed()) {
+                    expandParamsPanel();
+                } else {
+                    state.paramsCollapsed = true;
+                    paramsAutoCollapsed = false;
+                    saveStateToStorage();
+                    animateParamsPanel(true);
+                }
             };
             document.getElementById('paramsToggle').addEventListener('click', toggleParams);
             document.getElementById('paramsSummary').addEventListener('click', toggleParams);
+
+            let scrollFrame = null;
+            window.addEventListener('scroll', () => {
+                if (scrollFrame) return;
+                scrollFrame = requestAnimationFrame(() => {
+                    scrollFrame = null;
+                    handleParamsAutoCollapse();
+                });
+            }, { passive: true });
 
             document.getElementById('dutyToggle').addEventListener('click', () => {
                 state.dutyExpanded = !state.dutyExpanded;
@@ -1725,13 +1863,12 @@
             });
 
             // Tracker empty state: open Loan Parameters and jump to the start date
-            document.getElementById('trackerAddStartBtn').addEventListener('click', () => {
-                if (state.paramsCollapsed) {
-                    state.paramsCollapsed = false;
-                    updateParamsPanelUI();
-                    saveStateToStorage();
+            document.getElementById('trackerAddStartBtn').addEventListener('click', async () => {
+                if (isParamsCollapsed()) {
+                    await expandParamsPanel();
+                } else {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
-                window.scrollTo({ top: 0, behavior: 'smooth' });
                 loanStartDateInput.focus({ preventScroll: true });
             });
 

@@ -2723,16 +2723,17 @@
             wrapper.classList.toggle('hidden', !comparisons.length);
             const row = (value, title, detail, removable) => {
                 const selected = state.whatIfSelected === value;
-                // Saved comparisons get a grip to drag them into a new order; the fields row keeps its place at the top
+                // Saved comparisons get a grip to drag them into a new order; the fields row keeps its place at the top.
+                // The label names its radio (for=) so a click anywhere on the row selects it rather than the grip button.
                 const grip = removable
                     ? `<button type="button" data-drag-whatif class="shrink-0 -my-1 -ml-1 w-6 h-7 flex items-center justify-center rounded-md text-slate-400 hover:text-sky-400 cursor-grab active:cursor-grabbing" style="touch-action:none" title="Drag to reorder (or use the arrow keys)" aria-label="Reorder comparison: drag, or press the up and down arrow keys"><i class="fa-solid fa-grip-vertical text-[11px]"></i></button>`
                     : '<span class="shrink-0 -my-1 -ml-1 w-6" aria-hidden="true"></span>';
                 return `<li data-id="${value}">
-                    <label class="flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${selected
+                    <label for="whatIfView-${value}" class="flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${selected
                         ? 'border-sky-500/30 bg-sky-50/60 dark:bg-sky-500/5'
                         : 'border-slate-200/80 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800/80'}">
                         ${grip}
-                        <input type="radio" name="whatIfView" value="${value}" ${selected ? 'checked' : ''} class="mt-0.5 shrink-0" style="accent-color:#38bdf8">
+                        <input type="radio" id="whatIfView-${value}" name="whatIfView" value="${value}" ${selected ? 'checked' : ''} class="mt-0.5 shrink-0" style="accent-color:#38bdf8">
                         <span class="min-w-0 flex-1 text-xs leading-snug">
                             <span class="block font-bold text-slate-900 dark:text-white">${title}</span>
                             <span class="block mt-0.5 text-slate-500 dark:text-slate-400">${detail}</span>

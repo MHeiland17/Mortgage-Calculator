@@ -96,6 +96,29 @@
         .section-moved {
             outline-color: rgba(34, 197, 94, 0.6);
         }
+        /* Loan Balance chart header and graph stay in view while the what ifs are open
+           (STICKY_CHART_WITH_WHAT_IFS in the script turns this off). Negative margins plus matching
+           padding let the background cover the section's padding without moving anything. */
+        #chartStickyTop.chart-sticky {
+            position: sticky;
+            top: var(--chart-sticky-top, 4.5rem);
+            z-index: 15;
+            background: #0f172a;
+            margin: -1rem -1rem -0.75rem;
+            padding: 1rem 1rem 0.75rem;
+            border-radius: 1rem 1rem 0 0;
+            transition: box-shadow 0.2s ease;
+        }
+        @media (min-width: 640px) {
+            #chartStickyTop.chart-sticky {
+                margin: -1.5rem -1.5rem -0.75rem;
+                padding: 1.5rem 1.5rem 0.75rem;
+            }
+        }
+        #chartStickyTop.chart-sticky.is-stuck {
+            border-radius: 0;
+            box-shadow: 0 1px 0 #1e293b, 0 14px 18px -12px rgba(0, 0, 0, 0.7);
+        }
         /* Section being dragged */
         .section-dragging {
             opacity: 0.4;
@@ -679,23 +702,26 @@
 
             <!-- Interactive Chart -->
             <section data-section-id="chart" class="bg-white dark:bg-navy-900 rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 dark:border-slate-800">
-                <div class="flex items-start justify-between gap-3 mb-6">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 flex-1">
-                        <div>
-                            <h3 class="font-bold text-slate-900 dark:text-white text-base">Loan Balance & Amortization</h3>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">Visualizing loan payoff curve with and without offset savings</p>
+                <!-- Header and graph: stay in view while the what ifs are open (see STICKY_CHART_WITH_WHAT_IFS) -->
+                <div id="chartStickyTop">
+                    <div class="flex items-start justify-between gap-3 mb-6">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 flex-1">
+                            <div>
+                                <h3 class="font-bold text-slate-900 dark:text-white text-base">Loan Balance & Amortization</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Visualizing loan payoff curve with and without offset savings</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button id="viewChartBalance" class="px-3 py-1 text-xs font-semibold rounded-lg bg-brand-600 text-white">Balance</button>
+                                <button id="viewChartSplit" class="px-3 py-1 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Payment Breakdown</button>
+                            </div>
                         </div>
-                        <div class="flex space-x-2">
-                            <button id="viewChartBalance" class="px-3 py-1 text-xs font-semibold rounded-lg bg-brand-600 text-white">Balance</button>
-                            <button id="viewChartSplit" class="px-3 py-1 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Payment Breakdown</button>
-                        </div>
+                        <div data-section-controls></div>
                     </div>
-                    <div data-section-controls></div>
-                </div>
-
-                <!-- Canvas Container -->
-                <div class="relative h-64 sm:h-72 w-full">
-                    <canvas id="amortizationChart"></canvas>
+    
+                    <!-- Canvas Container -->
+                    <div class="relative h-64 sm:h-72 w-full">
+                        <canvas id="amortizationChart"></canvas>
+                    </div>
                 </div>
 
                 <!-- Visual what ifs: regular offset top-ups and extra repayments from today, drawn as a third line.
@@ -1718,6 +1744,32 @@
             document.getElementById('paramsToggle').setAttribute('aria-expanded', String(!collapsed));
             document.getElementById('paramsToggleLabel').textContent = collapsed ? 'Edit' : 'Hide';
             document.getElementById('paramsChevron').style.transform = collapsed ? 'rotate(180deg)' : '';
+            updateChartSticky();
+        }
+
+        // While the what ifs are open, the Loan Balance chart's header and graph stick under the bars pinned at
+        // the top, so the graph stays in view while scrolling through comparisons. Set to false to turn it off.
+        const STICKY_CHART_WITH_WHAT_IFS = true;
+
+        function updateChartSticky() {
+            const block = document.getElementById('chartStickyTop');
+            const on = STICKY_CHART_WITH_WHAT_IFS && state.whatIfExpanded;
+            const wasOn = block.classList.contains('chart-sticky');
+
+            // Stick just below the top bar, and below the collapsed Loan Parameters bar where that is pinned too
+            const panel = document.getElementById('paramsPanel');
+            const panelPinned = isParamsCollapsed() && window.matchMedia('(min-width: 768px)').matches;
+            const top = document.querySelector('body > header').offsetHeight + (panelPinned ? panel.offsetHeight : 0);
+            block.style.setProperty('--chart-sticky-top', `${top}px`);
+
+            if (on !== wasOn) {
+                // Turning it off while stuck: keep the graph where it is on screen instead of jumping up the page
+                const before = block.getBoundingClientRect().top;
+                const wasStuck = block.classList.contains('is-stuck');
+                block.classList.toggle('chart-sticky', on);
+                if (!on && wasStuck) window.scrollBy(0, block.getBoundingClientRect().top - before);
+            }
+            block.classList.toggle('is-stuck', on && block.getBoundingClientRect().top <= top + 1);
         }
 
         // Panel animation timings (ms)
@@ -2035,6 +2087,7 @@
         }
 
         function updateWhatIfUI() {
+            updateChartSticky(); // before the body hides, so a stuck graph can be kept where it is on screen
             const expanded = state.whatIfExpanded;
             document.getElementById('whatIfBody').classList.toggle('hidden', !expanded);
             document.getElementById('whatIfToggle').setAttribute('aria-expanded', String(expanded));
@@ -2147,8 +2200,10 @@
                 scrollFrame = requestAnimationFrame(() => {
                     scrollFrame = null;
                     handleParamsAutoCollapse();
+                    updateChartSticky();
                 });
             }, { passive: true });
+            window.addEventListener('resize', updateChartSticky);
 
             document.getElementById('dutyToggle').addEventListener('click', () => {
                 state.dutyExpanded = !state.dutyExpanded;

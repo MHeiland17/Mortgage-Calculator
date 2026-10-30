@@ -723,9 +723,9 @@
                                 </div>
                             </div>
                             <div class="grid grid-cols-3 gap-0.5 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg" role="group" aria-label="How often for the offset">
-                                <button type="button" class="whatif-freq-btn px-3 py-1.5 text-xs font-bold rounded-md transition-all" data-whatif="offset" data-freq="weekly">Weekly</button>
-                                <button type="button" class="whatif-freq-btn px-3 py-1.5 text-xs font-bold rounded-md transition-all" data-whatif="offset" data-freq="fortnightly">Fortnightly</button>
-                                <button type="button" class="whatif-freq-btn px-3 py-1.5 text-xs font-bold rounded-md transition-all" data-whatif="offset" data-freq="monthly">Monthly</button>
+                                <button type="button" class="whatif-freq-btn px-1 sm:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-md transition-all" data-whatif="offset" data-freq="weekly">Weekly</button>
+                                <button type="button" class="whatif-freq-btn px-1 sm:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-md transition-all" data-whatif="offset" data-freq="fortnightly">Fortnightly</button>
+                                <button type="button" class="whatif-freq-btn px-1 sm:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-md transition-all" data-whatif="offset" data-freq="monthly">Monthly</button>
                             </div>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2 items-end">
@@ -737,17 +737,31 @@
                                 </div>
                             </div>
                             <div class="grid grid-cols-3 gap-0.5 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg" role="group" aria-label="How often for extra repayments">
-                                <button type="button" class="whatif-freq-btn px-3 py-1.5 text-xs font-bold rounded-md transition-all" data-whatif="extra" data-freq="weekly">Weekly</button>
-                                <button type="button" class="whatif-freq-btn px-3 py-1.5 text-xs font-bold rounded-md transition-all" data-whatif="extra" data-freq="fortnightly">Fortnightly</button>
-                                <button type="button" class="whatif-freq-btn px-3 py-1.5 text-xs font-bold rounded-md transition-all" data-whatif="extra" data-freq="monthly">Monthly</button>
+                                <button type="button" class="whatif-freq-btn px-1 sm:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-md transition-all" data-whatif="extra" data-freq="weekly">Weekly</button>
+                                <button type="button" class="whatif-freq-btn px-1 sm:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-md transition-all" data-whatif="extra" data-freq="fortnightly">Fortnightly</button>
+                                <button type="button" class="whatif-freq-btn px-1 sm:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-md transition-all" data-whatif="extra" data-freq="monthly">Monthly</button>
                             </div>
                         </div>
 
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-200/80 dark:border-slate-700/60">
                             <p id="whatIfResult" class="text-xs text-slate-500 dark:text-slate-400 leading-snug"></p>
-                            <button id="whatIfResetBtn" type="button" class="shrink-0 self-start sm:self-auto px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                                <i class="fa-solid fa-rotate-left mr-1"></i> Reset
-                            </button>
+                            <div class="flex gap-2 shrink-0 self-start sm:self-auto">
+                                <button id="whatIfResetBtn" type="button" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                    <i class="fa-solid fa-rotate-left mr-1"></i> Reset
+                                </button>
+                                <button id="whatIfCreateBtn" type="button" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-sky-600 hover:bg-sky-500 text-white transition-colors disabled:opacity-40 disabled:pointer-events-none">
+                                    <i class="fa-solid fa-plus mr-1"></i> Create comparison
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Saved comparisons: pick one with its radio to draw it on the chart -->
+                        <div id="whatIfComparisons" class="hidden">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Comparisons</span>
+                                <button id="whatIfClearAllBtn" type="button" class="text-[11px] font-semibold text-slate-400 hover:text-rose-400 transition-colors">Clear all</button>
+                            </div>
+                            <ul id="whatIfComparisonList" class="space-y-2"></ul>
                         </div>
                         <p class="text-[11px] text-slate-400 dark:text-slate-500 leading-tight">
                             Starts from your next repayment and builds on your current offset balance and logged extra repayments. Your real figures above don't change.
@@ -1008,7 +1022,9 @@
             whatIfOffsetFreq: 'monthly',
             whatIfExtra: 0,
             whatIfExtraFreq: 'monthly',
-            whatIfExpanded: false
+            whatIfExpanded: false,
+            whatIfComparisons: [], // saved what-if setups: [{ id, offset, offsetFreq, extra, extraFreq }]
+            whatIfSelected: 'live' // what the chart's what-if line shows: 'live' (the fields) or a comparison id
         };
 
         // Current reactive state
@@ -1072,7 +1088,7 @@
         let rateMismatch = null; // { lender, variable, fixed } when the entered rate isn't one of the current bank's rates
 
         // Undo / redo history of state snapshots (view-only settings are left out)
-        const HISTORY_IGNORED_KEYS = ['paramsCollapsed', 'dutyExpanded', 'trackerBreakdownExpanded', 'whatIfOffset', 'whatIfOffsetFreq', 'whatIfExtra', 'whatIfExtraFreq', 'whatIfExpanded', 'chartMode', 'ratesPurpose'];
+        const HISTORY_IGNORED_KEYS = ['paramsCollapsed', 'dutyExpanded', 'trackerBreakdownExpanded', 'whatIfOffset', 'whatIfOffsetFreq', 'whatIfExtra', 'whatIfExtraFreq', 'whatIfExpanded', 'whatIfComparisons', 'whatIfSelected', 'chartMode', 'ratesPurpose'];
         const HISTORY_LIMIT = 100;
         const HISTORY_GROUP_MS = 700; // rapid changes (e.g. typing a number) become one undo step
         const history = { past: [], future: [], committed: null, pendingBase: null, timer: null };
@@ -1122,6 +1138,16 @@
                 if (!FREQUENCIES[merged[key]]) merged[key] = defaultState[key];
             });
             merged.whatIfExpanded = merged.whatIfExpanded === true;
+            merged.whatIfComparisons = Array.isArray(merged.whatIfComparisons)
+                ? merged.whatIfComparisons
+                    .filter(c => c && [c.offset, c.extra].every(v => typeof v === 'number' && isFinite(v) && v >= 0) && (c.offset > 0 || c.extra > 0))
+                    .map(c => ({
+                        id: String(c.id || newId()),
+                        offset: c.offset, offsetFreq: FREQUENCIES[c.offsetFreq] ? c.offsetFreq : 'monthly',
+                        extra: c.extra, extraFreq: FREQUENCIES[c.extraFreq] ? c.extraFreq : 'monthly'
+                    }))
+                : [];
+            if (!merged.whatIfComparisons.some(c => c.id === merged.whatIfSelected)) merged.whatIfSelected = 'live';
             if (!isValidISODate(merged.offsetBalanceAsOf)) merged.offsetBalanceAsOf = '';
             if (!isValidISODate(merged.loanStartDate)) merged.loanStartDate = '';
             if (!isValidISODate(merged.firstPaymentDate)) merged.firstPaymentDate = '';
@@ -1839,7 +1865,7 @@
             document.querySelectorAll('.whatif-freq-btn').forEach(btn => {
                 const key = btn.dataset.whatif === 'offset' ? 'whatIfOffsetFreq' : 'whatIfExtraFreq';
                 const active = btn.dataset.freq === state[key];
-                btn.className = `whatif-freq-btn px-3 py-1.5 text-xs font-bold rounded-md transition-all ${active
+                btn.className = `whatif-freq-btn px-1 sm:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-md transition-all ${active
                     ? 'bg-white dark:bg-navy-900 shadow-sm text-slate-900 dark:text-white'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`;
                 btn.setAttribute('aria-pressed', String(active));
@@ -1956,6 +1982,7 @@
                 document.getElementById(id).addEventListener('input', (e) => {
                     const val = parseMoney(e.target.value);
                     state[key] = isFinite(val) && val > 0 ? val : 0;
+                    state.whatIfSelected = 'live';
                     saveAndRecalculate();
                 });
                 // An empty or zero field shows the placeholder rather than "0"
@@ -1964,6 +1991,7 @@
             document.querySelectorAll('.whatif-freq-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     state[btn.dataset.whatif === 'offset' ? 'whatIfOffsetFreq' : 'whatIfExtraFreq'] = btn.dataset.freq;
+                    state.whatIfSelected = 'live';
                     updateWhatIfUI();
                     saveAndRecalculate();
                 });
@@ -1971,7 +1999,41 @@
             document.getElementById('whatIfResetBtn').addEventListener('click', () => {
                 state.whatIfOffset = 0;
                 state.whatIfExtra = 0;
+                state.whatIfSelected = 'live';
                 updateWhatIfUI();
+                saveAndRecalculate();
+            });
+
+            // Save the fields as a comparison; pick any comparison's radio to draw it on the chart
+            document.getElementById('whatIfCreateBtn').addEventListener('click', () => {
+                const setup = liveWhatIfSetup();
+                if (!(setup.offset > 0 || setup.extra > 0)) return;
+                if (state.whatIfComparisons.some(c => sameWhatIfSetup(c, setup))) {
+                    showToast('That what if is already in your comparisons', 'fa-circle-info');
+                    return;
+                }
+                state.whatIfComparisons = [...state.whatIfComparisons, { id: newId(), ...setup }];
+                saveAndRecalculate();
+                showToast('Comparison added', 'fa-plus');
+            });
+            document.getElementById('whatIfClearAllBtn').addEventListener('click', () => {
+                state.whatIfComparisons = [];
+                state.whatIfSelected = 'live';
+                saveAndRecalculate();
+            });
+            const comparisonList = document.getElementById('whatIfComparisonList');
+            comparisonList.addEventListener('change', (e) => {
+                if (e.target.name !== 'whatIfView') return;
+                state.whatIfSelected = e.target.value;
+                saveAndRecalculate();
+            });
+            comparisonList.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-remove-whatif]');
+                if (!btn) return;
+                e.preventDefault(); // don't also tick the row's radio
+                const id = btn.dataset.removeWhatif;
+                state.whatIfComparisons = state.whatIfComparisons.filter(c => c.id !== id);
+                if (state.whatIfSelected === id) state.whatIfSelected = 'live';
                 saveAndRecalculate();
             });
 
@@ -2381,38 +2443,47 @@
 
         // Visual what ifs: the "with offset" loan plus regular offset top-ups and extra repayments from the next
         // repayment on (monthly model, so weekly/fortnightly amounts become their monthly equivalent).
-        // Returns null when both amounts are empty.
-        function generateWhatIfSchedule(loanAmount, annualRate, years, monthDate, extrasByMonth, drawdownFromMonth) {
-            if (loanAmount <= 0 || !(state.whatIfOffset > 0 || state.whatIfExtra > 0)) return null;
+        // A setup is { offset, offsetFreq, extra, extraFreq }: the live fields or a saved comparison.
+        function liveWhatIfSetup() {
+            return { offset: state.whatIfOffset, offsetFreq: state.whatIfOffsetFreq, extra: state.whatIfExtra, extraFreq: state.whatIfExtraFreq };
+        }
+
+        function sameWhatIfSetup(a, b) {
+            return a.offset === b.offset && a.extra === b.extra
+                && (!a.offset || a.offsetFreq === b.offsetFreq) && (!a.extra || a.extraFreq === b.extraFreq);
+        }
+
+        // "$500 fortnightly offset + $200 monthly extras"
+        function describeWhatIfSetup(setup) {
+            const part = (amount, freq, what) => `$${moneyField.format(amount)} ${FREQUENCIES[freq].name.toLowerCase()} ${what}`;
+            return [
+                setup.offset > 0 ? part(setup.offset, setup.offsetFreq, 'offset') : '',
+                setup.extra > 0 ? part(setup.extra, setup.extraFreq, 'extras') : ''
+            ].filter(Boolean).join(' + ');
+        }
+
+        // Returns null when both amounts are empty
+        function generateWhatIfSchedule(loanAmount, annualRate, years, monthDate, extrasByMonth, drawdownFromMonth, setup) {
+            if (loanAmount <= 0 || !(setup.offset > 0 || setup.extra > 0)) return null;
             const totalMonths = years * 12;
             const today = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
             let fromMonth = 1;
             if (monthDate) while (fromMonth < totalMonths && monthDate(fromMonth) < today) fromMonth++;
 
             const perMonth = (amount, freq) => amount * FREQUENCIES[freq].perYear / 12;
-            const extraPerMonth = perMonth(state.whatIfExtra, state.whatIfExtraFreq);
+            const extraPerMonth = perMonth(setup.extra, setup.extraFreq);
             const extras = new Map(extrasByMonth);
             if (extraPerMonth > 0) {
                 for (let m = fromMonth; m <= totalMonths; m++) {
                     extras.set(m - 1, [...(extras.get(m - 1) || []), { amount: extraPerMonth }]);
                 }
             }
-            const topUp = state.whatIfOffset > 0 ? { fromMonth, perMonth: perMonth(state.whatIfOffset, state.whatIfOffsetFreq) } : null;
+            const topUp = setup.offset > 0 ? { fromMonth, perMonth: perMonth(setup.offset, setup.offsetFreq) } : null;
             return generateAmortizationSchedule(loanAmount, annualRate, years, state.repaymentType, state.offsetBalance, extras, drawdownFromMonth, topUp);
         }
 
-        // Result line and collapsed summary: payoff and interest compared with the current projection
-        function renderWhatIfResult(baseSchedule, whatIfSchedule) {
-            const result = document.getElementById('whatIfResult');
-            const summary = document.getElementById('whatIfSummary');
-            // With repayments coming out of the offset, make clear the top-up is on top of them
-            document.getElementById('whatIfOffsetNote').classList.toggle('hidden', !state.deductRepaymentsFromOffset);
-            if (!whatIfSchedule) {
-                result.textContent = 'Enter an amount to see a "Projected What If" line on the chart.';
-                summary.textContent = 'Try regular offset top-ups or extra repayments';
-                return;
-            }
-
+        // Payoff and interest compared with the current projection, as HTML and as a short plain summary
+        function whatIfOutcome(baseSchedule, whatIfSchedule) {
             const monthsSooner = baseSchedule.payoffMonths - whatIfSchedule.payoffMonths;
             const interestSaved = baseSchedule.totalInterest - whatIfSchedule.totalInterest;
             const strong = (text) => `<span class="font-bold text-slate-900 dark:text-white">${text}</span>`;
@@ -2430,10 +2501,49 @@
             const interest = interestSaved > 0.005
                 ? `<span class="font-bold text-emerald-500">${formatAUD(interestSaved)} less interest</span>`
                 : 'no change to interest';
-            result.innerHTML = `${payoff} · ${interest}`;
-            summary.textContent = monthsSooner > 0 || interestSaved > 0.005
+            const short = monthsSooner > 0 || interestSaved > 0.005
                 ? `${monthsSooner > 0 ? `${formatMonthsToYears(monthsSooner)} sooner · ` : ''}${formatAUD(Math.max(0, interestSaved))} less interest`
                 : 'No change yet';
+            return { html: `${payoff} · ${interest}`, short };
+        }
+
+        // Result line for the fields, the saved comparisons (each with a radio for the chart) and the collapsed summary
+        function renderWhatIfs(baseSchedule, liveSchedule, comparisons) {
+            // With repayments coming out of the offset, make clear the top-up is on top of them
+            document.getElementById('whatIfOffsetNote').classList.toggle('hidden', !state.deductRepaymentsFromOffset);
+
+            const live = liveSchedule ? whatIfOutcome(baseSchedule, liveSchedule) : null;
+            document.getElementById('whatIfResult').innerHTML = live
+                ? live.html
+                : 'Enter an amount to see a "Projected What If" line on the chart.';
+            document.getElementById('whatIfCreateBtn').disabled = !liveSchedule;
+
+            document.getElementById('whatIfComparisons').classList.toggle('hidden', !comparisons.length);
+            const row = (value, title, detail, removable) => {
+                const selected = state.whatIfSelected === value;
+                return `<li>
+                    <label class="flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${selected
+                        ? 'border-sky-500/30 bg-sky-50/60 dark:bg-sky-500/5'
+                        : 'border-slate-200/80 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800/80'}">
+                        <input type="radio" name="whatIfView" value="${value}" ${selected ? 'checked' : ''} class="mt-0.5 shrink-0" style="accent-color:#38bdf8">
+                        <span class="min-w-0 flex-1 text-xs leading-snug">
+                            <span class="font-bold text-slate-900 dark:text-white">${title}</span>
+                            <span class="text-slate-500 dark:text-slate-400">= ${detail}</span>
+                        </span>
+                        ${removable ? `<button type="button" data-remove-whatif="${value}" class="shrink-0 -my-1 w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-500/15 transition-colors" title="Remove comparison" aria-label="Remove comparison"><i class="fa-solid fa-xmark"></i></button>` : ''}
+                    </label>
+                </li>`;
+            };
+            document.getElementById('whatIfComparisonList').innerHTML = [
+                row('live', live ? `Current fields: ${describeWhatIfSetup(liveWhatIfSetup())}` : 'Current fields', live ? live.html : 'nothing entered yet', false),
+                ...comparisons.map(({ entry, schedule }) => row(entry.id, describeWhatIfSetup(entry), schedule ? whatIfOutcome(baseSchedule, schedule).html : 'no change', true))
+            ].join('');
+
+            const shown = state.whatIfSelected === 'live' ? liveSchedule : (comparisons.find(c => c.entry.id === state.whatIfSelected) || {}).schedule;
+            document.getElementById('whatIfSummary').textContent = shown
+                ? whatIfOutcome(baseSchedule, shown).short
+                : 'Try regular offset top-ups or extra repayments';
+            return shown || null;
         }
 
         // Primary Calculation Engine
@@ -2559,8 +2669,9 @@
             updateAmortizationTable(offsetSchedule.yearlySummary);
 
             // Visual what ifs (chart line and result only)
-            const whatIfSchedule = generateWhatIfSchedule(loanAmount, r, years, monthDate, extrasByMonth, drawdownFromMonth);
-            renderWhatIfResult(offsetSchedule, whatIfSchedule);
+            const whatIfFor = (setup) => generateWhatIfSchedule(loanAmount, r, years, monthDate, extrasByMonth, drawdownFromMonth, setup);
+            const comparisons = state.whatIfComparisons.map(entry => ({ entry, schedule: whatIfFor(entry) }));
+            const whatIfSchedule = renderWhatIfs(offsetSchedule, whatIfFor(liveWhatIfSetup()), comparisons);
 
             // Render/Update Chart
             renderChart(standardSchedule, offsetSchedule, whatIfSchedule);

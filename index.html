@@ -716,7 +716,7 @@
                     <div id="whatIfBody" class="hidden px-4 pb-4 pt-4 border-t border-slate-200/80 dark:border-slate-800 space-y-4">
                         <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2 items-end">
                             <div class="min-w-0">
-                                <label for="whatIfOffsetInput" class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">If I put this into my offset</label>
+                                <label for="whatIfOffsetInput" class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">If I put this into my offset <span id="whatIfOffsetNote" class="hidden font-normal text-slate-400 dark:text-slate-500">(This amount is extra on top of your repayment amount)</span></label>
                                 <div class="relative">
                                     <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-semibold text-sm">$</span>
                                     <input type="text" inputmode="decimal" autocomplete="off" data-money data-step="100" id="whatIfOffsetInput" placeholder="0" class="w-full pl-7 pr-3 py-2 text-sm font-semibold text-slate-900 dark:text-white bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none">
@@ -2405,6 +2405,8 @@
         function renderWhatIfResult(baseSchedule, whatIfSchedule) {
             const result = document.getElementById('whatIfResult');
             const summary = document.getElementById('whatIfSummary');
+            // With repayments coming out of the offset, make clear the top-up is on top of them
+            document.getElementById('whatIfOffsetNote').classList.toggle('hidden', !state.deductRepaymentsFromOffset);
             if (!whatIfSchedule) {
                 result.textContent = 'Enter an amount to see a "Projected What If" line on the chart.';
                 summary.textContent = 'Try regular offset top-ups or extra repayments';
@@ -3506,7 +3508,8 @@
 
         // Generate Detailed Amortization Breakdown (supports offset and extra repayments,
         // grouped by the number of monthly repayments made before them)
-        // offsetTopUp ({ fromMonth, perMonth }) adds to the offset balance before each repayment from fromMonth on
+        // offsetTopUp ({ fromMonth, perMonth }) adds to the offset before each repayment from fromMonth on. It is kept
+        // apart from the starting balance so repayments drawn from the offset never come out of it (extra on top)
         function generateAmortizationSchedule(principal, annualRate, years, type, offset, extrasByMonth = new Map(), drawdownFromMonth = null, offsetTopUp = null) {
             const monthlyRate = annualRate / 12;
             const totalMonths = years * 12;
@@ -3540,6 +3543,7 @@
             let payoffMonths = totalMonths;
             let paidOff = false;
             let offsetLeft = offset;
+            let toppedUp = 0; // what-if offset top-ups so far (never drawn down by repayments)
 
             for (let m = 1; m <= totalMonths; m++) {
                 if (paidOff) {
@@ -3562,7 +3566,7 @@
                 }
 
                 // Money added to the offset since the last repayment (what ifs)
-                if (offsetTopUp && m >= offsetTopUp.fromMonth) offsetLeft += offsetTopUp.perMonth;
+                if (offsetTopUp && m >= offsetTopUp.fromMonth) toppedUp += offsetTopUp.perMonth;
 
                 // Extra repayments made since the last repayment (negative = correction)
                 (extrasByMonth.get(m - 1) || []).forEach(extra => {
@@ -3573,7 +3577,7 @@
                 });
 
                 // Balance subject to interest with offset cap
-                const effectiveBalance = Math.max(0, balance - offsetLeft);
+                const effectiveBalance = Math.max(0, balance - offsetLeft - toppedUp);
                 let interestPayment = effectiveBalance * monthlyRate;
                 let principalPayment = monthlyPayment - interestPayment;
 

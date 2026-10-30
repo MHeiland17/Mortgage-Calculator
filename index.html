@@ -207,22 +207,21 @@
     <!-- Collapsible Loan Parameters Header Section -->
     <section id="paramsPanel" class="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-slate-800 shadow-sm md:top-16 z-20">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <button id="paramsToggle" type="button" aria-expanded="true" aria-controls="paramsBody" class="w-full flex items-center justify-between gap-3 py-4 text-left">
-                <span class="flex items-center gap-2.5">
+            <!-- Title, the collapsed summary chips (on the same line from sm up, below on phones) and Edit/Hide -->
+            <button id="paramsToggle" type="button" aria-expanded="true" aria-controls="paramsBody" class="w-full flex flex-wrap items-center gap-x-3 gap-y-2 py-4 text-left">
+                <span class="flex items-center gap-2.5 shrink-0">
                     <i class="fa-solid fa-sliders text-brand-600"></i>
-                    <span class="text-lg font-bold text-slate-900 dark:text-white">Loan Parameters</span>
+                    <span class="text-lg font-bold text-slate-900 dark:text-white">Parameters</span>
                     <span id="savedBadge" class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium opacity-0 transition-opacity flex items-center">
                         <i class="fa-solid fa-floppy-disk mr-1"></i> Saved locally
                     </span>
                 </span>
-                <span class="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                <span id="paramsSummary" class="hidden order-last basis-full sm:order-none sm:basis-0 sm:flex-1 min-w-0 flex flex-wrap gap-1.5"></span>
+                <span class="ml-auto flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
                     <span id="paramsToggleLabel">Hide</span>
                     <i id="paramsChevron" class="fa-solid fa-chevron-up transition-transform"></i>
                 </span>
             </button>
-
-            <!-- Collapsed summary chips -->
-            <div id="paramsSummary" class="hidden pb-4 -mt-1 flex flex-wrap gap-1.5 cursor-pointer" title="Expand loan parameters"></div>
 
             <div id="paramsBody" class="pb-6">
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-5">
@@ -476,7 +475,7 @@
 
                 <div id="trackerEmpty" class="p-4 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-center text-xs text-slate-500 dark:text-slate-400">
                     <i class="fa-regular fa-calendar text-base mb-1 block text-slate-400"></i>
-                    Add your loan start date in Loan Parameters to see payments made so far, your next payment and how much of the loan you've paid off.
+                    Add your loan start date in Parameters to see payments made so far, your next payment and how much of the loan you've paid off.
                     <button id="trackerAddStartBtn" type="button" class="block mx-auto mt-2 px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold transition-colors">
                         <i class="fa-solid fa-calendar-plus mr-1"></i> Add loan start date
                     </button>
@@ -1739,6 +1738,8 @@
             const collapsed = isParamsCollapsed();
             document.getElementById('paramsBody').classList.toggle('hidden', collapsed);
             document.getElementById('paramsSummary').classList.toggle('hidden', !collapsed);
+            // The chips share the title row when collapsed, so the "Saved locally" note only takes room while editing
+            savedBadge.classList.toggle('hidden', collapsed);
             // The collapsed bar stays pinned under the top bar on desktop
             document.getElementById('paramsPanel').classList.toggle('md:sticky', collapsed);
             document.getElementById('paramsToggle').setAttribute('aria-expanded', String(!collapsed));
@@ -2192,7 +2193,6 @@
                 }
             };
             document.getElementById('paramsToggle').addEventListener('click', toggleParams);
-            document.getElementById('paramsSummary').addEventListener('click', toggleParams);
 
             let scrollFrame = null;
             window.addEventListener('scroll', () => {

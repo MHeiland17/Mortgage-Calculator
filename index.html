@@ -697,6 +697,63 @@
                 <div class="relative h-64 sm:h-72 w-full">
                     <canvas id="amortizationChart"></canvas>
                 </div>
+
+                <!-- Visual what ifs: regular offset top-ups and extra repayments from today, drawn as a third line.
+                     Only changes the chart line and the result here, never the loan's real figures. -->
+                <div class="mt-5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800">
+                    <button id="whatIfToggle" type="button" aria-expanded="false" aria-controls="whatIfBody" class="w-full flex items-center justify-between gap-3 px-4 py-3 text-left rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors">
+                        <span class="min-w-0">
+                            <span class="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
+                                <i class="fa-solid fa-wand-magic-sparkles text-sky-400"></i> Visual what ifs
+                            </span>
+                            <span id="whatIfSummary" class="block text-[11px] text-slate-500 dark:text-slate-400 truncate">Try regular offset top-ups or extra repayments</span>
+                        </span>
+                        <span class="flex items-center gap-2 shrink-0 text-xs font-semibold text-brand-500">
+                            <span id="whatIfToggleLabel">Show</span>
+                            <i id="whatIfChevron" class="fa-solid fa-chevron-down text-[10px] transition-transform"></i>
+                        </span>
+                    </button>
+                    <div id="whatIfBody" class="hidden px-4 pb-4 pt-4 border-t border-slate-200/80 dark:border-slate-800 space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2 items-end">
+                            <div class="min-w-0">
+                                <label for="whatIfOffsetInput" class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">If I put this into my offset</label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-semibold text-sm">$</span>
+                                    <input type="text" inputmode="decimal" autocomplete="off" data-money data-step="100" id="whatIfOffsetInput" placeholder="0" class="w-full pl-7 pr-3 py-2 text-sm font-semibold text-slate-900 dark:text-white bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-0.5 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg" role="group" aria-label="How often for the offset">
+                                <button type="button" class="whatif-freq-btn px-3 py-1.5 text-xs font-bold rounded-md transition-all" data-whatif="offset" data-freq="weekly">Weekly</button>
+                                <button type="button" class="whatif-freq-btn px-3 py-1.5 text-xs font-bold rounded-md transition-all" data-whatif="offset" data-freq="fortnightly">Fortnightly</button>
+                                <button type="button" class="whatif-freq-btn px-3 py-1.5 text-xs font-bold rounded-md transition-all" data-whatif="offset" data-freq="monthly">Monthly</button>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2 items-end">
+                            <div class="min-w-0">
+                                <label for="whatIfExtraInput" class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">If I pay this extra off the loan</label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-semibold text-sm">$</span>
+                                    <input type="text" inputmode="decimal" autocomplete="off" data-money data-step="100" id="whatIfExtraInput" placeholder="0" class="w-full pl-7 pr-3 py-2 text-sm font-semibold text-slate-900 dark:text-white bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-0.5 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg" role="group" aria-label="How often for extra repayments">
+                                <button type="button" class="whatif-freq-btn px-3 py-1.5 text-xs font-bold rounded-md transition-all" data-whatif="extra" data-freq="weekly">Weekly</button>
+                                <button type="button" class="whatif-freq-btn px-3 py-1.5 text-xs font-bold rounded-md transition-all" data-whatif="extra" data-freq="fortnightly">Fortnightly</button>
+                                <button type="button" class="whatif-freq-btn px-3 py-1.5 text-xs font-bold rounded-md transition-all" data-whatif="extra" data-freq="monthly">Monthly</button>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-200/80 dark:border-slate-700/60">
+                            <p id="whatIfResult" class="text-xs text-slate-500 dark:text-slate-400 leading-snug"></p>
+                            <button id="whatIfResetBtn" type="button" class="shrink-0 self-start sm:self-auto px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                <i class="fa-solid fa-rotate-left mr-1"></i> Reset
+                            </button>
+                        </div>
+                        <p class="text-[11px] text-slate-400 dark:text-slate-500 leading-tight">
+                            Starts from your next repayment and builds on your current offset balance and logged extra repayments. Your real figures above don't change.
+                        </p>
+                    </div>
+                </div>
             </section>
 
             <!-- Frequency Comparison -->
@@ -945,7 +1002,13 @@
             sectionOrder: [...SECTION_IDS],
             paramsCollapsed: false,
             dutyExpanded: false,
-            trackerBreakdownExpanded: false
+            trackerBreakdownExpanded: false,
+            // Visual what ifs (chart only, never the real figures): regular offset top-ups and extra repayments from today
+            whatIfOffset: 0,
+            whatIfOffsetFreq: 'monthly',
+            whatIfExtra: 0,
+            whatIfExtraFreq: 'monthly',
+            whatIfExpanded: false
         };
 
         // Current reactive state
@@ -1009,7 +1072,7 @@
         let rateMismatch = null; // { lender, variable, fixed } when the entered rate isn't one of the current bank's rates
 
         // Undo / redo history of state snapshots (view-only settings are left out)
-        const HISTORY_IGNORED_KEYS = ['paramsCollapsed', 'dutyExpanded', 'trackerBreakdownExpanded', 'chartMode', 'ratesPurpose'];
+        const HISTORY_IGNORED_KEYS = ['paramsCollapsed', 'dutyExpanded', 'trackerBreakdownExpanded', 'whatIfOffset', 'whatIfOffsetFreq', 'whatIfExtra', 'whatIfExtraFreq', 'whatIfExpanded', 'chartMode', 'ratesPurpose'];
         const HISTORY_LIMIT = 100;
         const HISTORY_GROUP_MS = 700; // rapid changes (e.g. typing a number) become one undo step
         const history = { past: [], future: [], committed: null, pendingBase: null, timer: null };
@@ -1052,6 +1115,13 @@
             if (!LENDERS.some(l => l.name === merged.currentBank)) merged.currentBank = '';
             merged.deductRepaymentsFromOffset = merged.deductRepaymentsFromOffset === true;
             merged.trackerBreakdownExpanded = merged.trackerBreakdownExpanded === true;
+            ['whatIfOffset', 'whatIfExtra'].forEach(key => {
+                if (typeof merged[key] !== 'number' || !(merged[key] >= 0) || !isFinite(merged[key])) merged[key] = 0;
+            });
+            ['whatIfOffsetFreq', 'whatIfExtraFreq'].forEach(key => {
+                if (!FREQUENCIES[merged[key]]) merged[key] = defaultState[key];
+            });
+            merged.whatIfExpanded = merged.whatIfExpanded === true;
             if (!isValidISODate(merged.offsetBalanceAsOf)) merged.offsetBalanceAsOf = '';
             if (!isValidISODate(merged.loanStartDate)) merged.loanStartDate = '';
             if (!isValidISODate(merged.firstPaymentDate)) merged.firstPaymentDate = '';
@@ -1254,6 +1324,7 @@
             updateParamsPanelUI();
             updateDutyPanelUI();
             updateTrackerBreakdownUI();
+            updateWhatIfUI();
             applySectionOrder();
 
             // Lender rate comparison: owner occupier or investor
@@ -1753,6 +1824,28 @@
             await animateParamsPanel(false);
         }
 
+        function updateWhatIfUI() {
+            const expanded = state.whatIfExpanded;
+            document.getElementById('whatIfBody').classList.toggle('hidden', !expanded);
+            document.getElementById('whatIfToggle').setAttribute('aria-expanded', String(expanded));
+            document.getElementById('whatIfToggleLabel').textContent = expanded ? 'Hide' : 'Show';
+            document.getElementById('whatIfChevron').style.transform = expanded ? 'rotate(180deg)' : '';
+
+            const offsetInput = document.getElementById('whatIfOffsetInput');
+            const extraInput = document.getElementById('whatIfExtraInput');
+            if (document.activeElement !== offsetInput) setMoneyInput(offsetInput, state.whatIfOffset || NaN);
+            if (document.activeElement !== extraInput) setMoneyInput(extraInput, state.whatIfExtra || NaN);
+
+            document.querySelectorAll('.whatif-freq-btn').forEach(btn => {
+                const key = btn.dataset.whatif === 'offset' ? 'whatIfOffsetFreq' : 'whatIfExtraFreq';
+                const active = btn.dataset.freq === state[key];
+                btn.className = `whatif-freq-btn px-3 py-1.5 text-xs font-bold rounded-md transition-all ${active
+                    ? 'bg-white dark:bg-navy-900 shadow-sm text-slate-900 dark:text-white'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`;
+                btn.setAttribute('aria-pressed', String(active));
+            });
+        }
+
         function updateTrackerBreakdownUI() {
             const expanded = state.trackerBreakdownExpanded;
             document.getElementById('trackerBreakdownBody').classList.toggle('hidden', !expanded);
@@ -1851,6 +1944,35 @@
                 state.dutyExpanded = !state.dutyExpanded;
                 updateDutyPanelUI();
                 saveStateToStorage();
+            });
+
+            // Visual what ifs (kept out of undo history; only the chart line and result change)
+            document.getElementById('whatIfToggle').addEventListener('click', () => {
+                state.whatIfExpanded = !state.whatIfExpanded;
+                updateWhatIfUI();
+                saveStateToStorage();
+            });
+            [['whatIfOffsetInput', 'whatIfOffset'], ['whatIfExtraInput', 'whatIfExtra']].forEach(([id, key]) => {
+                document.getElementById(id).addEventListener('input', (e) => {
+                    const val = parseMoney(e.target.value);
+                    state[key] = isFinite(val) && val > 0 ? val : 0;
+                    saveAndRecalculate();
+                });
+                // An empty or zero field shows the placeholder rather than "0"
+                document.getElementById(id).addEventListener('blur', () => updateWhatIfUI());
+            });
+            document.querySelectorAll('.whatif-freq-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    state[btn.dataset.whatif === 'offset' ? 'whatIfOffsetFreq' : 'whatIfExtraFreq'] = btn.dataset.freq;
+                    updateWhatIfUI();
+                    saveAndRecalculate();
+                });
+            });
+            document.getElementById('whatIfResetBtn').addEventListener('click', () => {
+                state.whatIfOffset = 0;
+                state.whatIfExtra = 0;
+                updateWhatIfUI();
+                saveAndRecalculate();
             });
 
             document.getElementById('trackerBreakdownToggle').addEventListener('click', () => {
@@ -2257,6 +2379,61 @@
             });
         }
 
+        // Visual what ifs: the "with offset" loan plus regular offset top-ups and extra repayments from the next
+        // repayment on (monthly model, so weekly/fortnightly amounts become their monthly equivalent).
+        // Returns null when both amounts are empty.
+        function generateWhatIfSchedule(loanAmount, annualRate, years, monthDate, extrasByMonth, drawdownFromMonth) {
+            if (loanAmount <= 0 || !(state.whatIfOffset > 0 || state.whatIfExtra > 0)) return null;
+            const totalMonths = years * 12;
+            const today = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+            let fromMonth = 1;
+            if (monthDate) while (fromMonth < totalMonths && monthDate(fromMonth) < today) fromMonth++;
+
+            const perMonth = (amount, freq) => amount * FREQUENCIES[freq].perYear / 12;
+            const extraPerMonth = perMonth(state.whatIfExtra, state.whatIfExtraFreq);
+            const extras = new Map(extrasByMonth);
+            if (extraPerMonth > 0) {
+                for (let m = fromMonth; m <= totalMonths; m++) {
+                    extras.set(m - 1, [...(extras.get(m - 1) || []), { amount: extraPerMonth }]);
+                }
+            }
+            const topUp = state.whatIfOffset > 0 ? { fromMonth, perMonth: perMonth(state.whatIfOffset, state.whatIfOffsetFreq) } : null;
+            return generateAmortizationSchedule(loanAmount, annualRate, years, state.repaymentType, state.offsetBalance, extras, drawdownFromMonth, topUp);
+        }
+
+        // Result line and collapsed summary: payoff and interest compared with the current projection
+        function renderWhatIfResult(baseSchedule, whatIfSchedule) {
+            const result = document.getElementById('whatIfResult');
+            const summary = document.getElementById('whatIfSummary');
+            if (!whatIfSchedule) {
+                result.textContent = 'Enter an amount to see a "Projected What If" line on the chart.';
+                summary.textContent = 'Try regular offset top-ups or extra repayments';
+                return;
+            }
+
+            const monthsSooner = baseSchedule.payoffMonths - whatIfSchedule.payoffMonths;
+            const interestSaved = baseSchedule.totalInterest - whatIfSchedule.totalInterest;
+            const strong = (text) => `<span class="font-bold text-slate-900 dark:text-white">${text}</span>`;
+            const start = state.loanStartDate ? parseISODate(state.loanStartDate) : null;
+            const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const when = (months) => {
+                if (!start) return `after ${formatMonthsToYears(months)}`;
+                const date = addMonthsClamped(start, months);
+                return `${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+            };
+
+            const payoff = monthsSooner > 0
+                ? `Paid off ${strong(when(whatIfSchedule.payoffMonths))} instead of ${when(baseSchedule.payoffMonths)}: ${strong(`${formatMonthsToYears(monthsSooner)} sooner`)}`
+                : `Paid off ${strong(when(whatIfSchedule.payoffMonths))}, the same as now`;
+            const interest = interestSaved > 0.005
+                ? `<span class="font-bold text-emerald-500">${formatAUD(interestSaved)} less interest</span>`
+                : 'no change to interest';
+            result.innerHTML = `${payoff} · ${interest}`;
+            summary.textContent = monthsSooner > 0 || interestSaved > 0.005
+                ? `${monthsSooner > 0 ? `${formatMonthsToYears(monthsSooner)} sooner · ` : ''}${formatAUD(Math.max(0, interestSaved))} less interest`
+                : 'No change yet';
+        }
+
         // Primary Calculation Engine
         function calculateAll() {
             const loanAmount = Math.max(0, state.propertyPrice - state.deposit);
@@ -2379,8 +2556,12 @@
             // Update Table
             updateAmortizationTable(offsetSchedule.yearlySummary);
 
+            // Visual what ifs (chart line and result only)
+            const whatIfSchedule = generateWhatIfSchedule(loanAmount, r, years, monthDate, extrasByMonth, drawdownFromMonth);
+            renderWhatIfResult(offsetSchedule, whatIfSchedule);
+
             // Render/Update Chart
-            renderChart(standardSchedule, offsetSchedule);
+            renderChart(standardSchedule, offsetSchedule, whatIfSchedule);
         }
 
         // 5. RBA cash rate & meeting schedule
@@ -3325,7 +3506,8 @@
 
         // Generate Detailed Amortization Breakdown (supports offset and extra repayments,
         // grouped by the number of monthly repayments made before them)
-        function generateAmortizationSchedule(principal, annualRate, years, type, offset, extrasByMonth = new Map(), drawdownFromMonth = null) {
+        // offsetTopUp ({ fromMonth, perMonth }) adds to the offset balance before each repayment from fromMonth on
+        function generateAmortizationSchedule(principal, annualRate, years, type, offset, extrasByMonth = new Map(), drawdownFromMonth = null, offsetTopUp = null) {
             const monthlyRate = annualRate / 12;
             const totalMonths = years * 12;
 
@@ -3378,6 +3560,9 @@
                     }
                     continue;
                 }
+
+                // Money added to the offset since the last repayment (what ifs)
+                if (offsetTopUp && m >= offsetTopUp.fromMonth) offsetLeft += offsetTopUp.perMonth;
 
                 // Extra repayments made since the last repayment (negative = correction)
                 (extrasByMonth.get(m - 1) || []).forEach(extra => {
@@ -3472,7 +3657,7 @@
         }
 
         // Render Chart.js
-        function renderChart(stdSchedule, offsetSchedule) {
+        function renderChart(stdSchedule, offsetSchedule, whatIfSchedule = null) {
             const ctx = document.getElementById('amortizationChart').getContext('2d');
             // Dark theme only
 
@@ -3507,6 +3692,18 @@
                         borderWidth: 3
                     }
                 ];
+                if (whatIfSchedule) {
+                    datasets.push({
+                        label: 'Projected What If',
+                        data: whatIfSchedule.balanceHistory,
+                        borderColor: '#38bdf8',
+                        borderDash: [6, 4],
+                        backgroundColor: 'transparent',
+                        fill: false,
+                        tension: 0.2,
+                        borderWidth: 2.5
+                    });
+                }
             } else {
                 datasets = [
                     {

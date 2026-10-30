@@ -1760,7 +1760,7 @@
                 return Promise.race([
                     Promise.all(animations.map(a => a.finished.catch(() => {}))),
                     new Promise(resolve => setTimeout(resolve, totalMs + 250))
-                ]).then(() => animations.forEach(a => a.playState !== 'finished' && a.finish()));
+                ]).then(() => animations.forEach(a => a.playState === 'running' && a.finish())); // not ones a newer run cancelled
             };
             const superseded = () => run !== paramsAnimationRun;
             const staggerTotal = (count, each, gap) => each + Math.max(0, count - 1) * gap;
@@ -1814,6 +1814,186 @@
                     [{ opacity: 0, transform: 'translateY(4px)' }, { opacity: 1, transform: 'translateY(0)' }],
                     { duration: PANEL_CHIP_FADE, delay: i * PANEL_CHIP_STAGGER, easing: 'ease-out', fill: 'backwards' }
                 ));
+            });
+        }
+
+        // Accordion cards (tracker breakdown, visual what ifs), animated like the Loan Parameters panel:
+        // closing fades the contents out bottom to top then shrinks the card; opening grows the card then
+        // fades the contents in top to bottom. `applyUI` shows or hides the body for the new state.
+        // Plays even with reduced motion on, like the panel.
+        const accordionRuns = new WeakMap(); // card -> { run, animations }
+        let whatIfJustAdded = null; // id of the comparison to grow in on the next render
+
+        async function animateAccordion(body, expand, applyUI) {
+            const card = body.parentElement;
+            const items = () => [...body.children]
+                .flatMap(block => block.classList.contains('grid') ? [...block.children] : [block])
+                .filter(el => el.getClientRects().length);
+
+            // A newer toggle replaces this run: clear what's on screen and let this run stop at its next step
+            const prev = accordionRuns.get(card) || { run: 0, animations: [] };
+            prev.animations.forEach(a => a.cancel());
+            const current = { run: prev.run + 1, animations: [] };
+            accordionRuns.set(card, current);
+            [...body.querySelectorAll('*')].forEach(el => { if (el.style.opacity) el.style.opacity = ''; });
+            card.style.overflow = '';
+
+            if (!Element.prototype.animate) { applyUI(); return; }
+
+            const superseded = () => accordionRuns.get(card) !== current;
+            const track = (animations, totalMs) => {
+                current.animations.push(...animations);
+                return Promise.race([
+                    Promise.all(animations.map(a => a.finished.catch(() => {}))),
+                    new Promise(resolve => setTimeout(resolve, totalMs + 250))
+                ]).then(() => animations.forEach(a => a.playState === 'running' && a.finish())); // not ones a newer run cancelled
+            };
+            const staggerTotal = (count, each, gap) => each + Math.max(0, count - 1) * gap;
+
+            // Step 1 (closing): contents fade out bottom to top
+            if (!expand) {
+                const outgoing = items().reverse();
+                await track(outgoing.map((el, i) => el.animate(
+                    [{ opacity: 1, transform: 'translateY(0)' }, { opacity: 0, transform: 'translateY(-4px)' }],
+                    { duration: PANEL_FIELD_FADE, delay: i * PANEL_FIELD_STAGGER, easing: 'ease-in', fill: 'forwards' }
+                )), staggerTotal(outgoing.length, PANEL_FIELD_FADE, PANEL_FIELD_STAGGER));
+                if (superseded()) return;
+            }
+
+            // Step 2: change the card height
+            const startHeight = card.offsetHeight;
+            applyUI();
+            const incoming = expand ? items() : [];
+            incoming.forEach(el => { el.style.opacity = '0'; });
+            const endHeight = card.offsetHeight;
+
+            card.style.overflow = 'hidden';
+            await track([card.animate([{ height: `${startHeight}px` }, { height: `${endHeight}px` }],
+                { duration: PANEL_HEIGHT_CHANGE, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' })], PANEL_HEIGHT_CHANGE);
+            if (superseded()) return;
+            card.style.overflow = '';
+            current.animations.forEach(a => a.cancel()); // drop the held fade-outs
+            current.animations = [];
+
+            // Step 3 (opening): contents fade in top to bottom
+            incoming.forEach((el, i) => {
+                el.style.opacity = '';
+                current.animations.push(el.animate(
+                    [{ opacity: 0, transform: 'translateY(-4px)' }, { opacity: 1, transform: 'translateY(0)' }],
+                    { duration: PANEL_FIELD_FADE + 40, delay: i * PANEL_FIELD_STAGGER, easing: 'ease-out', fill: 'backwards' }
+                ));
+            });
+        }
+
+        // A block appearing grows to its height then fades in; one going away fades out then shrinks away
+        // (used for what-if comparisons). Resolves when done, even if animation frames stall.
+        function animateBlock(el, appearing) {
+            if (!Element.prototype.animate) return Promise.resolve();
+            const height = `${el.offsetHeight}px`;
+            const marginTop = getComputedStyle(el).marginTop;
+            const shown = { height, marginTop, opacity: 1, transform: 'translateY(0)' };
+            const open = { height, marginTop, opacity: 0, transform: 'translateY(-4px)' };
+            const closed = { height: '0px', marginTop: '0px', opacity: 0, transform: 'translateY(-4px)' };
+            const duration = PANEL_HEIGHT_CHANGE + PANEL_FIELD_FADE;
+            const split = PANEL_HEIGHT_CHANGE / duration;
+            const frames = appearing
+                ? [{ ...closed, offset: 0 }, { ...open, offset: split }, { ...shown, offset: 1 }]
+                : [{ ...shown, offset: 0 }, { ...open, offset: 1 - split }, { ...closed, offset: 1 }];
+            el.style.overflow = 'hidden';
+            const animation = el.animate(frames, { duration, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: appearing ? 'none' : 'forwards' });
+            return Promise.race([animation.finished.catch(() => {}), new Promise(resolve => setTimeout(resolve, duration + 250))])
+                .then(() => {
+                    if (animation.playState === 'running') animation.finish();
+                    el.style.overflow = '';
+                });
+        }
+        const growIn = (el) => animateBlock(el, true);
+        const shrinkOut = (el) => animateBlock(el, false);
+
+        // Reorder saved what-if comparisons by dragging their grip (mouse or touch) or with the arrow keys on it.
+        // The other rows slide out of the way as the dragged one passes their middle.
+        function setupComparisonReorder(list) {
+            const rows = () => [...list.querySelectorAll('li[data-id]:not([data-id="live"])')];
+            const slide = (li, fromTop) => {
+                const dy = fromTop - li.offsetTop;
+                if (dy && Element.prototype.animate) {
+                    li.animate([{ transform: `translateY(${dy}px)` }, { transform: 'translateY(0)' }], { duration: 180, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' });
+                }
+            };
+            const saveOrder = () => {
+                const order = rows().map(li => li.dataset.id);
+                state.whatIfComparisons = order.map(id => state.whatIfComparisons.find(c => c.id === id)).filter(Boolean);
+                saveStateToStorage();
+            };
+
+            list.addEventListener('pointerdown', (e) => {
+                const grip = e.target.closest('[data-drag-whatif]');
+                if (!grip || e.button > 0) return;
+                e.preventDefault();
+                const li = grip.closest('li');
+                let originY = e.clientY;
+                grip.setPointerCapture(e.pointerId);
+                li.style.position = 'relative';
+                li.style.zIndex = '10';
+                li.style.transition = 'box-shadow 0.15s';
+                li.style.boxShadow = '0 10px 25px -5px rgba(0, 0, 0, 0.5)';
+
+                const middle = (el) => el.offsetTop + el.offsetHeight / 2; // layout position, ignoring slides in progress
+                const move = (ev) => {
+                    // A fast drag can pass several rows at once: keep swapping while past a neighbour's middle
+                    for (let guard = 0; guard < 50; guard++) {
+                        const draggedMid = middle(li) + (ev.clientY - originY);
+                        const siblings = rows();
+                        const index = siblings.indexOf(li);
+                        const next = siblings[index + 1];
+                        const prev = siblings[index - 1];
+                        const other = next && draggedMid > middle(next) ? next : prev && draggedMid < middle(prev) ? prev : null;
+                        if (!other) break;
+                        const liTop = li.offsetTop;
+                        const otherTop = other.offsetTop;
+                        // Move the neighbour, never the dragged row: re-inserting it would drop the pointer capture
+                        list.insertBefore(other, other === next ? li : li.nextSibling);
+                        originY += li.offsetTop - liTop; // keep the dragged row under the pointer
+                        slide(other, otherTop);
+                    }
+                    li.style.transform = `translateY(${ev.clientY - originY}px)`;
+                };
+                let ended = false;
+                const end = () => {
+                    if (ended) return;
+                    ended = true;
+                    grip.removeEventListener('pointermove', move);
+                    grip.removeEventListener('pointerup', end);
+                    grip.removeEventListener('pointercancel', end);
+                    grip.removeEventListener('lostpointercapture', end);
+                    const from = li.getBoundingClientRect().top;
+                    li.style.transform = '';
+                    li.style.boxShadow = '';
+                    slide(li, li.offsetTop + (from - li.getBoundingClientRect().top));
+                    setTimeout(() => { li.style.position = ''; li.style.zIndex = ''; li.style.transition = ''; }, 200);
+                    saveOrder();
+                };
+                grip.addEventListener('pointermove', move);
+                grip.addEventListener('pointerup', end);
+                grip.addEventListener('pointercancel', end);
+                grip.addEventListener('lostpointercapture', end);
+            });
+
+            list.addEventListener('keydown', (e) => {
+                const grip = e.target.closest('[data-drag-whatif]');
+                if (!grip || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
+                e.preventDefault();
+                const li = grip.closest('li');
+                const siblings = rows();
+                const other = siblings[siblings.indexOf(li) + (e.key === 'ArrowUp' ? -1 : 1)];
+                if (!other) return;
+                const liTop = li.offsetTop;
+                const otherTop = other.offsetTop;
+                list.insertBefore(other, e.key === 'ArrowUp' ? li.nextSibling : li); // keeps focus on the grip
+                slide(li, liTop);
+                slide(other, otherTop);
+                grip.focus();
+                saveOrder();
             });
         }
 
@@ -1979,7 +2159,7 @@
             // Visual what ifs (kept out of undo history; only the chart line and result change)
             document.getElementById('whatIfToggle').addEventListener('click', () => {
                 state.whatIfExpanded = !state.whatIfExpanded;
-                updateWhatIfUI();
+                animateAccordion(document.getElementById('whatIfBody'), state.whatIfExpanded, updateWhatIfUI);
                 saveStateToStorage();
             });
             [['whatIfOffsetInput', 'whatIfOffset'], ['whatIfExtraInput', 'whatIfExtra']].forEach(([id, key]) => {
@@ -2016,11 +2196,13 @@
                     showToast('That what if is already in your comparisons', 'fa-circle-info');
                     return;
                 }
-                state.whatIfComparisons = [...state.whatIfComparisons, { id: newId(), ...setup }];
+                const id = newId();
+                state.whatIfComparisons = [...state.whatIfComparisons, { id, ...setup }];
+                whatIfJustAdded = id;
                 saveAndRecalculate();
-                showToast('Comparison added', 'fa-plus');
             });
-            document.getElementById('whatIfClearAllBtn').addEventListener('click', () => {
+            document.getElementById('whatIfClearAllBtn').addEventListener('click', async () => {
+                await shrinkOut(document.getElementById('whatIfComparisons'));
                 state.whatIfComparisons = [];
                 state.whatIfSelected = 'live';
                 saveAndRecalculate();
@@ -2031,19 +2213,27 @@
                 state.whatIfSelected = e.target.value;
                 saveAndRecalculate();
             });
-            comparisonList.addEventListener('click', (e) => {
+            comparisonList.addEventListener('click', async (e) => {
+                // The grip and the remove button sit inside the row's label: don't also tick its radio
+                if (e.target.closest('[data-drag-whatif]')) { e.preventDefault(); return; }
                 const btn = e.target.closest('[data-remove-whatif]');
                 if (!btn) return;
-                e.preventDefault(); // don't also tick the row's radio
+                e.preventDefault();
                 const id = btn.dataset.removeWhatif;
+                const li = btn.closest('li');
+                if (li.dataset.removing) return;
+                li.dataset.removing = '1';
+                // The last one takes the whole list (and its heading) with it
+                await shrinkOut(state.whatIfComparisons.length === 1 ? document.getElementById('whatIfComparisons') : li);
                 state.whatIfComparisons = state.whatIfComparisons.filter(c => c.id !== id);
                 if (state.whatIfSelected === id) state.whatIfSelected = 'live';
                 saveAndRecalculate();
             });
+            setupComparisonReorder(comparisonList);
 
             document.getElementById('trackerBreakdownToggle').addEventListener('click', () => {
                 state.trackerBreakdownExpanded = !state.trackerBreakdownExpanded;
-                updateTrackerBreakdownUI();
+                animateAccordion(document.getElementById('trackerBreakdownBody'), state.trackerBreakdownExpanded, updateTrackerBreakdownUI);
                 saveStateToStorage();
             });
 
@@ -2526,13 +2716,22 @@
                 : 'Enter an amount to see a "Projected What If" line on the chart.';
             document.getElementById('whatIfCreateBtn').disabled = !liveSchedule;
 
-            document.getElementById('whatIfComparisons').classList.toggle('hidden', !comparisons.length);
+            const wrapper = document.getElementById('whatIfComparisons');
+            const wasHidden = wrapper.classList.contains('hidden');
+            // Drop a finished "shrink away" (Clear all, or removing the last one) so the list can show again
+            wrapper.getAnimations().filter(a => a.effect.getTiming().fill === 'forwards').forEach(a => a.cancel());
+            wrapper.classList.toggle('hidden', !comparisons.length);
             const row = (value, title, detail, removable) => {
                 const selected = state.whatIfSelected === value;
-                return `<li>
+                // Saved comparisons get a grip to drag them into a new order; the fields row keeps its place at the top
+                const grip = removable
+                    ? `<button type="button" data-drag-whatif class="shrink-0 -my-1 -ml-1 w-6 h-7 flex items-center justify-center rounded-md text-slate-400 hover:text-sky-400 cursor-grab active:cursor-grabbing" style="touch-action:none" title="Drag to reorder (or use the arrow keys)" aria-label="Reorder comparison: drag, or press the up and down arrow keys"><i class="fa-solid fa-grip-vertical text-[11px]"></i></button>`
+                    : '<span class="shrink-0 -my-1 -ml-1 w-6" aria-hidden="true"></span>';
+                return `<li data-id="${value}">
                     <label class="flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${selected
                         ? 'border-sky-500/30 bg-sky-50/60 dark:bg-sky-500/5'
                         : 'border-slate-200/80 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800/80'}">
+                        ${grip}
                         <input type="radio" name="whatIfView" value="${value}" ${selected ? 'checked' : ''} class="mt-0.5 shrink-0" style="accent-color:#38bdf8">
                         <span class="min-w-0 flex-1 text-xs leading-snug">
                             <span class="block font-bold text-slate-900 dark:text-white">${title}</span>
@@ -2546,6 +2745,13 @@
                 row('live', live ? `Current fields: ${describeWhatIfSetup(liveWhatIfSetup())}` : 'Current fields', live ? live.html : 'nothing entered yet', false),
                 ...comparisons.map(({ entry, schedule }) => row(entry.id, describeWhatIfSetup(entry), schedule ? whatIfOutcome(baseSchedule, schedule).html : 'no change', true))
             ].join('');
+
+            // A comparison was just added: grow it in (the whole list when it's the first one)
+            if (whatIfJustAdded) {
+                const added = wasHidden ? wrapper : document.querySelector(`#whatIfComparisonList li[data-id="${whatIfJustAdded}"]`);
+                whatIfJustAdded = null;
+                if (added) growIn(added);
+            }
 
             const shown = state.whatIfSelected === 'live' ? liveSchedule : (comparisons.find(c => c.entry.id === state.whatIfSelected) || {}).schedule;
             document.getElementById('whatIfSummary').textContent = shown
@@ -3788,10 +3994,6 @@
             const textColor = '#94a3b8';
             const gridColor = '#1e293b';
 
-            if (chartInstance) {
-                chartInstance.destroy();
-            }
-
             let datasets = [];
 
             if (state.chartMode === 'balance') {
@@ -3851,6 +4053,20 @@
                 ];
             }
 
+            // Same view as before: update the existing chart so its lines glide to their new positions
+            // (matched by label) instead of redrawing from the bottom
+            if (chartInstance && chartInstance.$mode === state.chartMode) {
+                const previous = chartInstance.data.datasets;
+                chartInstance.data.labels = offsetSchedule.labels;
+                chartInstance.data.datasets = datasets.map(ds => {
+                    const old = previous.find(p => p.label === ds.label);
+                    return old ? Object.assign(old, ds) : ds;
+                });
+                chartInstance.update();
+                return;
+            }
+            if (chartInstance) chartInstance.destroy();
+
             chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -3860,6 +4076,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    animation: { duration: 500, easing: 'easeOutCubic' },
                     interaction: {
                         mode: 'index',
                         intersect: false,
@@ -3906,6 +4123,7 @@
                     }
                 }
             });
+            chartInstance.$mode = state.chartMode;
         }
     </script>
 </body>

@@ -4111,6 +4111,28 @@
                         borderWidth: 2
                     }
                 ];
+                // The selected what if as dashed lines in lighter shades of the same colours
+                if (whatIfSchedule) {
+                    datasets.push({
+                        label: 'What If Principal Paid',
+                        data: whatIfSchedule.principalPaidHistory,
+                        borderColor: '#86efac',
+                        borderDash: [6, 4],
+                        backgroundColor: 'transparent',
+                        fill: false,
+                        tension: 0.2,
+                        borderWidth: 2
+                    }, {
+                        label: 'What If Interest Paid',
+                        data: whatIfSchedule.interestHistory,
+                        borderColor: '#fcd34d',
+                        borderDash: [6, 4],
+                        backgroundColor: 'transparent',
+                        fill: false,
+                        tension: 0.2,
+                        borderWidth: 2
+                    });
+                }
             }
 
             // Same view as before: update the existing chart so its lines glide to their new positions

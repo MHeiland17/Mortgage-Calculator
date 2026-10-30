@@ -2647,11 +2647,15 @@
                 && (!a.offset || a.offsetFreq === b.offsetFreq) && (!a.extra || a.extraFreq === b.extraFreq);
         }
 
-        // "$500 fortnightly offset + $200 monthly extras" / "$10,000 one-off offset + $5,000 one-off extra"
-        function describeWhatIfSetup(setup) {
+        // "$500 fortnightly offset + $200 monthly extras" / "$10,000 one-off offset + $5,000 one-off extra".
+        // With `html`, the amounts are bold so they stand out from the muted wording.
+        function describeWhatIfSetup(setup, html = false) {
+            const money = (amount) => html
+                ? `<span class="font-bold text-slate-900 dark:text-white">$${moneyField.format(amount)}</span>`
+                : `$${moneyField.format(amount)}`;
             const part = (amount, freq, one, regular) => freq === 'oneoff'
-                ? `$${moneyField.format(amount)} one-off ${one}`
-                : `$${moneyField.format(amount)} ${FREQUENCIES[freq].name.toLowerCase()} ${regular}`;
+                ? `${money(amount)} one-off ${one}`
+                : `${money(amount)} ${FREQUENCIES[freq].name.toLowerCase()} ${regular}`;
             return [
                 setup.offset > 0 ? part(setup.offset, setup.offsetFreq, 'offset', 'offset') : '',
                 setup.extra > 0 ? part(setup.extra, setup.extraFreq, 'extra', 'extras') : ''
@@ -2735,7 +2739,7 @@
                         ${grip}
                         <input type="radio" id="whatIfView-${value}" name="whatIfView" value="${value}" ${selected ? 'checked' : ''} class="mt-0.5 shrink-0" style="accent-color:#38bdf8">
                         <span class="min-w-0 flex-1 text-xs leading-snug">
-                            <span class="block font-bold text-slate-900 dark:text-white">${title}</span>
+                            <span class="block text-slate-500 dark:text-slate-400">${title}</span>
                             <span class="block mt-0.5 text-slate-500 dark:text-slate-400">${detail}</span>
                         </span>
                         ${removable ? `<button type="button" data-remove-whatif="${value}" class="shrink-0 -my-1 w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-500/15 transition-colors" title="Remove comparison" aria-label="Remove comparison"><i class="fa-solid fa-xmark"></i></button>` : ''}
@@ -2743,8 +2747,8 @@
                 </li>`;
             };
             document.getElementById('whatIfComparisonList').innerHTML = [
-                row('live', live ? `Current fields: ${describeWhatIfSetup(liveWhatIfSetup())}` : 'Current fields', live ? live.html : 'nothing entered yet', false),
-                ...comparisons.map(({ entry, schedule }) => row(entry.id, describeWhatIfSetup(entry), schedule ? whatIfOutcome(baseSchedule, schedule).html : 'no change', true))
+                row('live', live ? `Current fields: ${describeWhatIfSetup(liveWhatIfSetup(), true)}` : 'Current fields', live ? live.html : 'nothing entered yet', false),
+                ...comparisons.map(({ entry, schedule }) => row(entry.id, describeWhatIfSetup(entry, true), schedule ? whatIfOutcome(baseSchedule, schedule).html : 'no change', true))
             ].join('');
 
             // A comparison was just added: grow it in (the whole list when it's the first one)

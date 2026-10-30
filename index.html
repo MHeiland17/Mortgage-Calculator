@@ -4111,12 +4111,12 @@
                         borderWidth: 2
                     }
                 ];
-                // The selected what if as dashed lines in lighter shades of the same colours
+                // The selected what if as dashed lines: principal in blue, interest in purple
                 if (whatIfSchedule) {
                     datasets.push({
                         label: 'What If Principal Paid',
                         data: whatIfSchedule.principalPaidHistory,
-                        borderColor: '#86efac',
+                        borderColor: '#60a5fa',
                         borderDash: [6, 4],
                         backgroundColor: 'transparent',
                         fill: false,
@@ -4125,7 +4125,7 @@
                     }, {
                         label: 'What If Interest Paid',
                         data: whatIfSchedule.interestHistory,
-                        borderColor: '#fcd34d',
+                        borderColor: '#c084fc',
                         borderDash: [6, 4],
                         backgroundColor: 'transparent',
                         fill: false,
